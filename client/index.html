@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>RefineryIQ - Smart Refinery Intelligence Platform</title>
+    <meta name="description" content="AI-Driven Smart Refinery Energy & Safety Intelligence Platform for real-time monitoring, prediction, and optimization" />
+    <meta name="author" content="RefineryIQ" />
+
+    <meta property="og:title" content="RefineryIQ - Smart Refinery Intelligence" />
+    <meta property="og:description" content="AI-powered refinery energy monitoring, prediction, and safety optimization" />
+    <meta property="og:type" content="website" />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:site" content="@RefineryIQ" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Prevent flash of unstyled content -->
+    <script>
+      try {
+        const theme = localStorage.getItem('theme') || 'light';
+        if (theme === 'dark' || (!theme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+          document.documentElement.classList.add('dark');
+        }
+      } catch (e) {}
+    </script>
+  </head>
+
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
