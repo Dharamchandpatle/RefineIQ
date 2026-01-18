@@ -3,21 +3,20 @@
  * Manages user authentication state and actions
  */
 
-import { useState, useEffect, createContext, useContext } from "react";
-import { authApi } from "@/services/api";
+import { authApi, type UserRole } from "@/services/api";
+import { createContext, useContext, useEffect, useState } from "react";
 
 interface User {
-  id: string;
   email: string;
   name: string;
-  role: string;
+  role: UserRole;
 }
 
 interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  login: (email: string, password: string) => Promise<void>;
+  login: (email: string, password: string) => Promise<{ user: User } | undefined>;
   logout: () => void;
 }
 
@@ -40,7 +39,6 @@ export const useAuthState = () => {
     const currentUser = authApi.getCurrentUser();
     if (currentUser && authApi.isAuthenticated()) {
       setUser({
-        id: currentUser.id,
         email: currentUser.email,
         name: currentUser.name,
         role: currentUser.role,
@@ -54,6 +52,7 @@ export const useAuthState = () => {
     try {
       const response = await authApi.login(email, password);
       setUser(response.user);
+      return { user: response.user };
     } finally {
       setIsLoading(false);
     }

@@ -1,245 +1,79 @@
-/**
- * Login Page
- * Authentication entry point with animated UI
- */
-
-import BackgroundComponent from "@/components/ui/background-components";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { useAuth } from "@/hooks/useAuth";
-import { motion } from "framer-motion";
-import {
-    Activity,
-    AlertCircle,
-    ArrowRight,
-    Brain,
-    Loader2,
-    Lock,
-    Mail,
-    Shield,
-    Zap,
-} from "lucide-react";
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 const Login = () => {
+  const { login } = useAuth();
+  const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-  const navigate = useNavigate();
-  const { login } = useAuth();
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
     setError("");
-    setIsLoading(true);
+    setLoading(true);
 
     try {
-      await login(email, password);
-      navigate("/dashboard");
+      const response = await login(email, password);
+      const role = response?.user?.role || "OPERATOR";
+      navigate(role === "ADMIN" ? "/dashboard/admin" : "/dashboard/operator");
     } catch (err) {
       setError("Invalid credentials. Please try again.");
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
   };
 
-  const features = [
-    {
-      icon: Activity,
-      title: "Real-time Monitoring",
-      description: "Track energy consumption across all units",
-    },
-    {
-      icon: Brain,
-      title: "AI-Powered Insights",
-      description: "Intelligent predictions and recommendations",
-    },
-    {
-      icon: Shield,
-      title: "Safety Intelligence",
-      description: "Proactive anomaly detection and alerts",
-    },
-  ];
-
   return (
-    <BackgroundComponent>
-      <div className="min-h-screen flex items-center justify-center p-4">
-        <div className="w-full max-w-5xl grid lg:grid-cols-2 gap-8 lg:gap-16">
-          {/* Left side - Branding */}
-          <motion.div
-            initial={{ opacity: 0, x: -50 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.6 }}
-            className="flex flex-col justify-center"
-          >
-            {/* Logo - Clickable to navigate home */}
-            <Link to="/" className="flex items-center gap-4 mb-8 group">
-              <div className="relative flex-shrink-0">
-                <div className="w-16 h-16 rounded-xl overflow-hidden bg-white flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all">
-                  <img 
-                    src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRFPC-soVqmkNILA6QUDqpv9ZRMbkunkW6TRw&s" 
-                    alt="IOCL Logo" 
-                    className="w-14 h-14 object-contain"
-                  />
-                </div>
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground mb-1">
-                  Indian Oil Corporation Ltd.
-                </p>
-                <h1 className="font-orbitron font-bold text-2xl lg:text-3xl text-gradient-primary group-hover:scale-105 transition-transform">
-                  RefineryIQ
-                </h1>
-              </div>
-            </Link>
+    <div className="w-full max-w-xl mx-auto mt-10 border border-slate-200 dark:border-slate-800 rounded-lg p-8 bg-white dark:bg-slate-900 shadow-sm">
+      <h2 className="text-2xl font-semibold text-brand-blue mb-2">Sign in</h2>
+      <p className="text-sm text-slate-500 mb-6">
+        Access the AI-driven smart refinery dashboards.
+      </p>
 
-            <h2 className="font-orbitron font-bold text-2xl lg:text-3xl mb-4">
-              AI-Driven Energy & Safety Intelligence Platform
-            </h2>
-            <p className="text-muted-foreground text-lg mb-8">
-              Monitor, predict, and optimize refinery operations with
-              cutting-edge AI technology.
-            </p>
-
-            {/* Features */}
-            <div className="space-y-4">
-              {features.map((feature, index) => (
-                <motion.div
-                  key={feature.title}
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ duration: 0.4, delay: 0.2 + index * 0.1 }}
-                  className="flex items-start gap-4"
-                >
-                  <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
-                    <feature.icon className="w-6 h-6 text-primary" />
-                  </div>
-                  <div>
-                    <h3 className="font-medium mb-1">{feature.title}</h3>
-                    <p className="text-sm text-muted-foreground">
-                      {feature.description}
-                    </p>
-                  </div>
-                </motion.div>
-              ))}
-            </div>
-          </motion.div>
-
-          {/* Right side - Login form */}
-          <motion.div
-            initial={{ opacity: 0, x: 50 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.6, delay: 0.2 }}
-            className="flex items-center justify-center"
-          >
-            <div className="w-full max-w-md glass-card p-8">
-              <div className="text-center mb-8">
-                <h2 className="font-orbitron font-bold text-2xl mb-2 text-[#003A8F]">
-                  Welcome Back
-                </h2>
-                <p className="text-gray-500 dark:text-gray-400">
-                  Sign in to access your dashboard
-                </p>
-              </div>
-
-              <form onSubmit={handleSubmit} className="space-y-6">
-                {error && (
-                  <motion.div
-                    initial={{ opacity: 0, y: -10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="flex items-center gap-2 p-3 rounded-lg bg-destructive/10 border border-destructive/30 text-destructive"
-                  >
-                    <AlertCircle className="w-4 h-4 flex-shrink-0" />
-                    <span className="text-sm">{error}</span>
-                  </motion.div>
-                )}
-
-                <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
-                  <div className="relative">
-                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                    <Input
-                      id="email"
-                      type="email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      placeholder="admin@refineryiq.com"
-                      className="pl-10 bg-muted/50 border-white/10 focus:border-primary/50"
-                      required
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="password">Password</Label>
-                  <div className="relative">
-                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                    <Input
-                      id="password"
-                      type="password"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      placeholder="••••••••"
-                      className="pl-10 bg-muted/50 border-white/10 focus:border-primary/50"
-                      required
-                    />
-                  </div>
-                </div>
-
-                <Button
-                  type="submit"
-                  disabled={isLoading}
-                  variant="primary"
-                  className="w-full font-medium"
-                >
-                  {isLoading ? (
-                    <>
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      Signing in...
-                    </>
-                  ) : (
-                    <>
-                      Sign In
-                      <ArrowRight className="w-4 h-4 ml-2" />
-                    </>
-                  )}
-                </Button>
-              </form>
-
-              {/* Demo credentials */}
-              <div className="mt-6 p-4 rounded-lg bg-muted/30 border border-white/5">
-                <p className="text-xs text-muted-foreground mb-2">
-                  Demo Credentials:
-                </p>
-                <div className="space-y-1 text-xs">
-                  <p>
-                    <span className="text-muted-foreground">Admin:</span>{" "}
-                    <code className="text-primary">admin@refineryiq.com</code> /{" "}
-                    <code className="text-primary">admin123</code>
-                  </p>
-                  <p>
-                    <span className="text-muted-foreground">Operator:</span>{" "}
-                    <code className="text-primary">operator@refineryiq.com</code> /{" "}
-                    <code className="text-primary">operator123</code>
-                  </p>
-                </div>
-              </div>
-
-              {/* Powered by indicator */}
-              <div className="mt-6 text-center">
-                <p className="text-xs text-muted-foreground flex items-center justify-center gap-1">
-                  <Zap className="w-3 h-3 text-primary" />
-                  Powered by RefineryIQ Intelligence Engine
-                </p>
-              </div>
-            </div>
-          </motion.div>
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div>
+          <label htmlFor="email" className="text-sm text-slate-600 dark:text-slate-300">
+            Email
+          </label>
+          <input
+            id="email"
+            type="email"
+            value={email}
+            onChange={(event) => setEmail(event.target.value)}
+            placeholder="name@iocl.com"
+            className="mt-1 w-full border border-slate-200 dark:border-slate-700 rounded-md px-3 py-2 text-sm bg-white dark:bg-slate-900"
+            required
+          />
         </div>
-      </div>
-    </BackgroundComponent>
+        <div>
+          <label htmlFor="password" className="text-sm text-slate-600 dark:text-slate-300">
+            Password
+          </label>
+          <input
+            id="password"
+            type="password"
+            value={password}
+            onChange={(event) => setPassword(event.target.value)}
+            placeholder="••••••••"
+            className="mt-1 w-full border border-slate-200 dark:border-slate-700 rounded-md px-3 py-2 text-sm bg-white dark:bg-slate-900"
+            required
+          />
+        </div>
+
+        {error ? <p className="text-sm text-brand-orange">{error}</p> : null}
+
+        <button
+          type="submit"
+          disabled={loading}
+          className="w-full bg-brand-orange text-white text-sm font-medium py-2 rounded-md"
+        >
+          {loading ? "Signing in..." : "Sign In"}
+        </button>
+      </form>
+    </div>
   );
 };
 

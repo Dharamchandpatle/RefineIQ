@@ -2,248 +2,57 @@
 @tailwind components;
 @tailwind utilities;
 
-/* RefineryIQ Design System - Industrial Glassmorphism with Neon Glow */
-
 @layer base {
   :root {
-    /* Light Mode Colors */
+    --brand-blue: 217 100% 28%;
+    --brand-orange: 24 90% 53%;
     --background: 0 0% 100%;
-    --foreground: 222 47% 11%;
-
-    --card: 0 0% 100%;
-    --card-foreground: 222 47% 11%;
-
-    --popover: 0 0% 100%;
-    --popover-foreground: 222 47% 11%;
-
-    --primary: 54 100% 50%;
-    --primary-foreground: 0 0% 100%;
-
-    --secondary: 186 100% 42%;
-    --secondary-foreground: 0 0% 100%;
-
-    --muted: 210 40% 96%;
-    --muted-foreground: 215 20% 40%;
-
-    --accent: 24 100% 50%;
-    --accent-foreground: 0 0% 100%;
-
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 0 0% 100%;
-
-    --success: 142 76% 36%;
-    --success-foreground: 0 0% 100%;
-
-    --warning: 38 92% 50%;
-    --warning-foreground: 0 0% 100%;
-
-    --border: 214 32% 91%;
-    --input: 214 32% 91%;
-    --ring: 54 100% 50%;
-
-    --radius: 0.75rem;
-
-    --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 222 47% 11%;
-    --sidebar-primary: 54 100% 50%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 210 40% 96%;
-    --sidebar-accent-foreground: 222 47% 11%;
-    --sidebar-border: 214 32% 91%;
-    --sidebar-ring: 54 100% 50%;
+    --foreground: 215 28% 12%;
+    --border: 210 20% 90%;
   }
 
   .dark {
-    /* Dark Mode - Deep industrial navy */
-    --background: 222 47% 6%;
-    --foreground: 210 40% 96%;
-
-    --card: 222 47% 10%;
-    --card-foreground: 210 40% 96%;
-
-    --popover: 222 47% 8%;
-    --popover-foreground: 210 40% 96%;
-
-    --primary: 54 100% 78%;
-    --primary-foreground: 222 47% 6%;
-
-    --secondary: 186 100% 50%;
-    --secondary-foreground: 222 47% 6%;
-
-    --muted: 222 30% 15%;
-    --muted-foreground: 215 20% 65%;
-
-    --accent: 24 100% 55%;
-    --accent-foreground: 222 47% 6%;
-
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 210 40% 98%;
-
-    --success: 142 76% 45%;
-    --success-foreground: 222 47% 6%;
-
-    --warning: 38 92% 50%;
-    --warning-foreground: 222 47% 6%;
-
-    --border: 222 30% 20%;
-    --input: 222 30% 18%;
-    --ring: 54 100% 78%;
-
-    /* Glassmorphism effects */
-    --glass-bg: 222 47% 10% / 0.6;
-    --glass-border: 210 40% 96% / 0.1;
-    --glass-blur: 20px;
-
-    /* Neon glow colors */
-    --glow-primary: 0 0 30px hsl(54 100% 78% / 0.5);
-    --glow-secondary: 0 0 30px hsl(186 100% 50% / 0.5);
-    --glow-accent: 0 0 30px hsl(24 100% 55% / 0.5);
-    --glow-success: 0 0 20px hsl(142 76% 45% / 0.5);
-    --glow-destructive: 0 0 20px hsl(0 84% 60% / 0.5);
-
-    --sidebar-background: 222 47% 8%;
-    --sidebar-foreground: 210 40% 96%;
-    --sidebar-primary: 54 100% 78%;
-    --sidebar-primary-foreground: 222 47% 6%;
-    --sidebar-accent: 222 30% 15%;
-    --sidebar-accent-foreground: 210 40% 96%;
-    --sidebar-border: 222 30% 20%;
-    --sidebar-ring: 54 100% 78%;
+    --background: 222 30% 8%;
+    --foreground: 210 20% 96%;
+    --border: 216 18% 22%;
   }
-}
 
-@layer base {
   * {
     @apply border-border;
   }
 
   body {
-    @apply bg-background text-foreground font-poppins antialiased;
+    @apply bg-white text-slate-900 font-poppins antialiased;
   }
 
-  h1, h2, h3, h4, h5, h6 {
-    @apply font-orbitron font-bold tracking-wide;
-  }
-}
-
-@layer components {
-  /* Glassmorphism card - theme aware */
-  .glass-card {
-    @apply relative overflow-hidden rounded-xl border backdrop-blur-xl;
-  }
-  
-  .dark .glass-card {
-    @apply border-white/10 bg-card/60;
-  }
-  
-  .glass-card:not(.dark .glass-card) {
-    @apply border-gray-200 bg-white/80 shadow-sm;
+  .dark body {
+    @apply bg-slate-950 text-slate-100;
   }
 
-  /* Neon glow effects - only in dark mode */
-  .dark .glow-primary {
-    box-shadow: var(--glow-primary);
-  }
-
-  .dark .glow-secondary {
-    box-shadow: var(--glow-secondary);
-  }
-
-  .dark .glow-accent {
-    box-shadow: var(--glow-accent);
-  }
-
-  .dark .glow-success {
-    box-shadow: var(--glow-success);
-  }
-
-  .dark .glow-destructive {
-    box-shadow: var(--glow-destructive);
-  }
-
-  /* Animated gradient border */
-  .gradient-border {
-    @apply relative;
-  }
-
-  .gradient-border::before {
-    content: '';
-    @apply absolute inset-0 rounded-xl p-[1px];
-    background: linear-gradient(
-      135deg,
-      hsl(var(--primary)) 0%,
-      hsl(var(--secondary)) 50%,
-      hsl(var(--accent)) 100%
-    );
-    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-    -webkit-mask-composite: xor;
-    mask-composite: exclude;
-  }
-
-  /* Pulse animation for alerts */
-  .pulse-alert {
-    animation: pulseAlert 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-  }
-
-  @keyframes pulseAlert {
-    0%, 100% {
-      opacity: 1;
-    }
-    50% {
-      opacity: 0.5;
-    }
-  }
-
-  /* Scan line effect */
-  .scan-line::after {
-    content: '';
-    @apply absolute inset-0 pointer-events-none;
-    background: linear-gradient(
-      transparent 50%,
-      rgba(0, 0, 0, 0.1) 50%
-    );
-    background-size: 100% 4px;
-  }
-
-  /* Data stream animation */
-  .data-stream {
-    background: linear-gradient(
-      90deg,
-      transparent,
-      hsl(var(--primary) / 0.3),
-      transparent
-    );
-    background-size: 200% 100%;
-    animation: dataStream 2s linear infinite;
-  }
-
-  @keyframes dataStream {
-    0% {
-      background-position: -200% 0;
-    }
-    100% {
-      background-position: 200% 0;
-    }
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    @apply font-orbitron font-semibold text-brand-blue;
   }
 }
 
 @layer utilities {
-  /* Text gradient utility */
-  .text-gradient-primary {
-    @apply bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent;
+  .text-brand-blue {
+    color: hsl(var(--brand-blue));
   }
 
-  /* Background patterns */
-  .bg-grid-pattern {
-    background-image: 
-      linear-gradient(hsl(var(--border) / 0.3) 1px, transparent 1px),
-      linear-gradient(90deg, hsl(var(--border) / 0.3) 1px, transparent 1px);
-    background-size: 50px 50px;
+  .bg-brand-blue {
+    background-color: hsl(var(--brand-blue));
   }
 
-  .bg-dots-pattern {
-    background-image: radial-gradient(hsl(var(--muted-foreground) / 0.2) 1px, transparent 1px);
-    background-size: 20px 20px;
+  .text-brand-orange {
+    color: hsl(var(--brand-orange));
+  }
+
+  .bg-brand-orange {
+    background-color: hsl(var(--brand-orange));
   }
 }
