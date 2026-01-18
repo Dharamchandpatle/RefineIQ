@@ -28,7 +28,7 @@ export const Header = () => {
             className="w-10 h-10 object-contain transition-transform group-hover:scale-110"
           />
           <span className="font-orbitron font-bold text-lg hidden sm:inline-block">
-            RefineryIQ
+            RefineIQ
           </span>
         </Link>
 

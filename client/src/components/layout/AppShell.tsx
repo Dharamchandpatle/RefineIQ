@@ -1,3 +1,4 @@
+import { Toaster } from "@/components/ui/sonner";
 import { useAuth } from "@/hooks/useAuth";
 import { Outlet } from "react-router-dom";
 import Footer from "../Footer";
@@ -14,6 +15,7 @@ const AppShell = () => {
         <Outlet />
       </main>
       <Footer />
+      <Toaster richColors position="top-right" />
       {isAuthenticated ? <ChatbotWidget /> : null}
     </div>
   );

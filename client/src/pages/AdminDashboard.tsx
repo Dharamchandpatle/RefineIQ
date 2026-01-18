@@ -2,13 +2,15 @@ import EnergyChart from "@/components/EnergyChart";
 import KpiCard from "@/components/KpiCard";
 import RecommendationPanel from "@/components/RecommendationPanel";
 import UserOverview from "@/components/UserOverview";
+import DatasetUpload from "@/components/admin/DatasetUpload";
+import FluidLoader from "@/components/ui/FluidLoader";
 import {
     forecastsApi,
     kpiApi,
     recommendationsApi,
     type RecommendationRecord,
 } from "@/services/api";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 const AdminDashboard = () => {
   const [summary, setSummary] = useState({ avg_sec: 0, total_energy: 0, anomaly_rate: 0 });
@@ -18,48 +20,48 @@ const AdminDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  useEffect(() => {
-    const loadData = async () => {
-      setLoading(true);
-      setError("");
-      try {
-        const [summaryData, energyData, secData, recs] = await Promise.all([
-          kpiApi.getSummary(),
-          forecastsApi.getForecast("energy"),
-          forecastsApi.getForecast("sec"),
-          recommendationsApi.getAll(),
-        ]);
+  const loadData = useCallback(async () => {
+    setLoading(true);
+    setError("");
+    try {
+      const [summaryData, energyData, secData, recs] = await Promise.all([
+        kpiApi.getSummary(),
+        forecastsApi.getForecast("energy"),
+        forecastsApi.getForecast("sec"),
+        recommendationsApi.getAll(),
+      ]);
 
-        setSummary({
-          avg_sec: summaryData.avg_sec || 0,
-          total_energy: summaryData.total_energy || 0,
-          anomaly_rate: summaryData.anomaly_rate || 0,
-        });
+      setSummary({
+        avg_sec: summaryData.avg_sec || 0,
+        total_energy: summaryData.total_energy || 0,
+        anomaly_rate: summaryData.anomaly_rate || 0,
+      });
 
-        setEnergyForecast(
-          (energyData || []).slice(-30).map((item, index) => ({
-            label: item.timestamp ? new Date(item.timestamp).toLocaleDateString() : `T${index + 1}`,
-            value: item.value || 0,
-          }))
-        );
+      setEnergyForecast(
+        (energyData || []).slice(-30).map((item, index) => ({
+          label: item.timestamp ? new Date(item.timestamp).toLocaleDateString() : `T${index + 1}`,
+          value: item.value || 0,
+        }))
+      );
 
-        setSecForecast(
-          (secData || []).slice(-30).map((item, index) => ({
-            label: item.timestamp ? new Date(item.timestamp).toLocaleDateString() : `T${index + 1}`,
-            value: item.value || 0,
-          }))
-        );
+      setSecForecast(
+        (secData || []).slice(-30).map((item, index) => ({
+          label: item.timestamp ? new Date(item.timestamp).toLocaleDateString() : `T${index + 1}`,
+          value: item.value || 0,
+        }))
+      );
 
-        setRecommendations(recs || []);
-      } catch (err) {
-        setError("Unable to load admin dashboard data.");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadData();
+      setRecommendations(recs || []);
+    } catch (err) {
+      setError("Unable to load admin dashboard data.");
+    } finally {
+      setLoading(false);
+    }
   }, []);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
 
   const forecastedEnergy = useMemo(() => {
     if (energyForecast.length === 0) return "N/A";
@@ -67,7 +69,11 @@ const AdminDashboard = () => {
   }, [energyForecast]);
 
   if (loading) {
-    return <p className="text-sm text-slate-500">Loading admin dashboard...</p>;
+    return (
+      <div className="flex items-center justify-center min-h-[320px]">
+        <FluidLoader />
+      </div>
+    );
   }
 
   return (
@@ -76,6 +82,8 @@ const AdminDashboard = () => {
         <h2 className="text-2xl font-semibold text-brand-blue">Admin Dashboard</h2>
         <p className="text-sm text-slate-500">Analysis, optimization, and system-wide control.</p>
       </header>
+
+      <DatasetUpload onSuccess={loadData} />
 
       {error ? <p className="text-sm text-brand-orange">{error}</p> : null}
 

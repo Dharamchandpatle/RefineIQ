@@ -83,7 +83,7 @@ const Home = () => {
 
                   <h1 className="font-orbitron font-bold text-4xl md:text-6xl lg:text-7xl leading-tight">
                     <TypewriterText
-                      text="RefineryIQ"
+                      text="RefineIQ"
                       className="text-gradient-primary"
                     />
                   </h1>

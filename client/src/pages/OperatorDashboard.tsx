@@ -2,6 +2,7 @@ import AlertTable from "@/components/AlertTable";
 import EnergyChart from "@/components/EnergyChart";
 import KpiCard from "@/components/KpiCard";
 import RecommendationPanel from "@/components/RecommendationPanel";
+import FluidLoader from "@/components/ui/FluidLoader";
 import {
     anomaliesApi,
     forecastsApi,
@@ -62,7 +63,11 @@ const OperatorDashboard = () => {
   }, [energyTrend]);
 
   if (loading) {
-    return <p className="text-sm text-slate-500">Loading operator dashboard...</p>;
+    return (
+      <div className="flex items-center justify-center min-h-[320px]">
+        <FluidLoader />
+      </div>
+    );
   }
 
   return (

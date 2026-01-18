@@ -76,7 +76,7 @@ export const Sidebar = () => {
     >
       <div className="flex flex-col h-full p-4">
         {/* Logo */}
-        <NavLink to="/dashboard" className="flex items-center gap-3 mb-8 group">
+        <NavLink to="/" className="flex items-center gap-3 mb-8 group">
           <div className="relative flex-shrink-0">
             <div className="w-12 h-12 rounded-lg overflow-hidden bg-white flex items-center justify-center shadow-md group-hover:shadow-lg transition-shadow">
               <img 
@@ -98,7 +98,7 @@ export const Sidebar = () => {
                   Indian Oil Corporation Ltd.
                 </span>
                 <span className="font-orbitron font-bold text-lg text-gradient-primary">
-                  RefineryIQ
+                  RefineIQ
                 </span>
               </motion.div>
             )}
