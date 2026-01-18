@@ -11,6 +11,7 @@ from app.routes.chatbot_routes import router as chatbot_router
 from app.routes.forecast_routes import router as forecast_router
 from app.routes.kpi_routes import router as kpi_router
 from app.routes.recommendation_routes import router as recommendation_router
+from app.routes.upload_routes import router as upload_router
 
 app = FastAPI(title="RefineryIQ API", version="1.0.0")
 
@@ -44,3 +45,4 @@ app.include_router(anomaly_router)
 app.include_router(forecast_router)
 app.include_router(recommendation_router)
 app.include_router(chatbot_router)
+app.include_router(upload_router)
