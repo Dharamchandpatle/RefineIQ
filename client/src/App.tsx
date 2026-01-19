@@ -19,20 +19,19 @@ const ProtectedRoute = ({
   children: React.ReactNode;
   role?: "ADMIN" | "OPERATOR";
 }) => {
-  // Auth checks temporarily disabled
-  // const { isAuthenticated, isLoading, user } = useAuth();
-  // if (isLoading) return null;
-  // if (!isAuthenticated) return <Navigate to="/login" replace />;
-  // if (role && user?.role !== role) {
-  //   return <Navigate to="/dashboard" replace />;
-  // }
+  const { isAuthenticated, isLoading, user } = useAuth();
+  if (isLoading) return null;
+  if (!isAuthenticated) return <Navigate to="/" replace />;
+  if (role && user?.role !== role) {
+    return <Navigate to="/" replace />;
+  }
   return <>{children}</>;
 };
 
 const RoleRedirect = () => {
   const { user, isAuthenticated, isLoading } = useAuth();
   if (isLoading) return null;
-  if (!isAuthenticated) return <Navigate to="/login" replace />;
+  if (!isAuthenticated) return <Navigate to="/" replace />;
   return <Navigate to={user?.role === "ADMIN" ? "/dashboard/admin" : "/dashboard/operator"} replace />;
 };
 
@@ -96,7 +95,7 @@ const AppRoutes = () => {
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
+    <ThemeProvider attribute="class" defaultTheme="light" enableSystem storageKey="refineryiq_theme">
       <BrowserRouter>
         <AppRoutes />
       </BrowserRouter>

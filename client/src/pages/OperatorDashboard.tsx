@@ -146,6 +146,8 @@ const OperatorDashboard = () => {
       });
   }, [alerts, unitFilter, dateFilter]);
 
+  const limitedAlerts = useMemo(() => filteredAlerts.slice(0, 15), [filteredAlerts]);
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[320px]">
@@ -211,7 +213,7 @@ const OperatorDashboard = () => {
             </select>
           </div>
         </div>
-        <AlertTable alerts={filteredAlerts} />
+        <AlertTable alerts={limitedAlerts} />
       </div>
     </div>
   );

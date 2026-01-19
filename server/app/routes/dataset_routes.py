@@ -3,7 +3,8 @@ from __future__ import annotations
 from fastapi import APIRouter, Depends, HTTPException, status
 
 from app.db.mongodb import get_db
-from app.services.dataset_service import get_active_dataset_id, list_datasets, set_active_dataset
+from app.services.auth_service import require_admin
+from app.services.dataset_service import delete_dataset, get_active_dataset_id, list_datasets, set_active_dataset
 
 router_api = APIRouter(prefix="/api", tags=["datasets"])
 
@@ -28,3 +29,21 @@ async def api_set_active_dataset(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Missing dataset id")
     await set_active_dataset(db, dataset_id)
     return {"dataset_id": dataset_id}
+
+
+@router_api.delete("/datasets/{dataset_id}")
+async def api_delete_dataset(
+    dataset_id: str,
+    db=Depends(get_db),
+    _user=Depends(require_admin),
+) -> dict:
+    if not dataset_id:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Missing dataset id")
+    try:
+        await delete_dataset(db, dataset_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+    return {
+        "success": True,
+        "message": "Dataset deleted successfully",
+    }

@@ -74,6 +74,8 @@ const TOKEN_KEY = "refineryiq_token";
 const ROLE_KEY = "refineryiq_role";
 const USER_KEY = "refineryiq_user";
 
+const normalizeRole = (role?: string | null): UserRole => (role?.toUpperCase() === "ADMIN" ? "ADMIN" : "OPERATOR");
+
 export const API_BASE = (import.meta.env.VITE_API_BASE || "http://localhost:8000").replace(/\/$/, "");
 
 export const buildUrl = (path: string) => `${API_BASE}${path.startsWith("/") ? path : `/${path}`}`;
@@ -153,7 +155,7 @@ export const authApi = {
       user?: { email?: string; name?: string; role?: UserRole };
     }>("/auth/login", { email, password });
 
-    const role = data.role || data.user?.role || "OPERATOR";
+    const role = normalizeRole(data.role || data.user?.role || "OPERATOR");
     const user = {
       email,
       name: data.user?.name || email.split("@")[0],
@@ -171,13 +173,21 @@ export const authApi = {
     localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem(ROLE_KEY);
     localStorage.removeItem(USER_KEY);
+    sessionStorage.removeItem(TOKEN_KEY);
+    sessionStorage.removeItem(ROLE_KEY);
+    sessionStorage.removeItem(USER_KEY);
   },
 
   getCurrentUser: () => {
     const stored = localStorage.getItem(USER_KEY);
     if (!stored) return null;
     try {
-      return JSON.parse(stored) as { email: string; name: string; role: UserRole };
+      const parsed = JSON.parse(stored) as { email: string; name: string; role?: string };
+      return {
+        email: parsed.email,
+        name: parsed.name,
+        role: normalizeRole(parsed.role),
+      } as { email: string; name: string; role: UserRole };
     } catch {
       return null;
     }
@@ -235,6 +245,11 @@ export const datasetsApi = {
     apiGet<{ dataset_id: string | null }>("/api/datasets/active", { headers: getAuthHeader() }),
   setActive: async (datasetId: string): Promise<{ dataset_id: string }> =>
     apiPost<{ dataset_id: string }>(`/api/datasets/active/${datasetId}`, undefined, {
+      headers: getAuthHeader(),
+    }),
+  delete: async (datasetId: string): Promise<{ success: boolean; message: string }> =>
+    requestJson<{ success: boolean; message: string }>(`/api/datasets/${datasetId}`, {
+      method: "DELETE",
       headers: getAuthHeader(),
     }),
 };

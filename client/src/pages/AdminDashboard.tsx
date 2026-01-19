@@ -108,7 +108,9 @@ const AdminDashboard = () => {
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
-        <RecommendationPanel title="Recommendation Analysis" recommendations={recommendations} />
+        <div className="max-h-[400px] overflow-y-auto">
+          <RecommendationPanel title="Recommendation Analysis" recommendations={recommendations} />
+        </div>
         <UserOverview />
       </div>
     </div>

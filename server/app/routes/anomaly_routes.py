@@ -26,3 +26,21 @@ async def api_alerts(
     db=Depends(get_db),
 ) -> list[Alert]:
     return await get_alerts_from_db(db, limit)
+
+
+@router_api.get("/alerts")
+async def api_alerts_latest(
+    dataset_id: str | None = Query(default=None),
+    limit: int = Query(15, ge=1, le=100),
+    db=Depends(get_db),
+) -> list[dict]:
+    alerts = await get_alerts_from_db(db, limit, dataset_id=dataset_id)
+    return [
+        {
+            "severity": alert.get("severity"),
+            "message": alert.get("message"),
+            "unit": alert.get("source") or alert.get("unit_name"),
+            "timestamp": alert.get("timestamp") or alert.get("date"),
+        }
+        for alert in (alerts or [])
+    ]

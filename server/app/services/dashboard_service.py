@@ -57,7 +57,7 @@ async def get_operator_dashboard(db, dataset_id: str | None) -> dict[str, Any]:
         dataset_id = await get_active_dataset_id(db)
 
     snapshot = await get_latest_snapshot(db, dataset_id)
-    alerts = await get_alerts_from_db(db, limit=200, dataset_id=dataset_id)
+    alerts = await get_alerts_from_db(db, limit=15, dataset_id=dataset_id)
     recommendations = await get_recommendations_from_db(db, limit=50, dataset_id=dataset_id)
 
     energy_trend = _normalize_trend(snapshot.get("recent_energy_trend"))

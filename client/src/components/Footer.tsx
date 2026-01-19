@@ -1,5 +1,5 @@
 const Footer = () => (
-  <footer className="border-t border-slate-300 bg-slate-950 text-slate-200">
+  <footer className="border-t border-slate-300 bg-slate-950 text-slate-200 dark:border-slate-800 dark:bg-slate-950">
     <div className="w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
       <div className="flex items-center gap-3">
         <img
