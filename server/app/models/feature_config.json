@@ -1,0 +1,40 @@
+{
+  "features": [
+    "electricity_kwh",
+    "steam_usage",
+    "fuel_usage",
+    "production_tons",
+    "SEC"
+  ],
+  "severity_rules": {
+    "high": 1.5,
+    "medium": 1.2,
+    "low": 1.0
+  },
+  "column_map": {
+    "electricity_kwh": [
+      "electricity_kwh",
+      "electricity",
+      "elec_kwh"
+    ],
+    "steam_usage": [
+      "steam_usage",
+      "steam"
+    ],
+    "fuel_usage": [
+      "fuel_usage",
+      "fuel"
+    ],
+    "production_tons": [
+      "production_tons",
+      "production"
+    ]
+  },
+  "sec_mean": 15.53313993512624,
+  "recommendations": {
+    "HIGH": "Immediate action: reduce load, inspect equipment",
+    "MEDIUM": "Optimize parameters and steam usage",
+    "LOW": "Preventive optimization",
+    "NORMAL": "Operation normal"
+  }
+}

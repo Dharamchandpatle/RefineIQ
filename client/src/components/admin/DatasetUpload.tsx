@@ -12,6 +12,7 @@ const DatasetUpload = ({ onSuccess }: DatasetUploadProps) => {
   const [file, setFile] = useState<File | null>(null);
   const [status, setStatus] = useState<StatusState>("idle");
   const [message, setMessage] = useState<string>("");
+  const [progress, setProgress] = useState<number>(0);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const selected = event.target.files?.[0] ?? null;
@@ -20,6 +21,7 @@ const DatasetUpload = ({ onSuccess }: DatasetUploadProps) => {
 
     if (!selected) {
       setFile(null);
+      setProgress(0);
       return;
     }
 
@@ -28,10 +30,12 @@ const DatasetUpload = ({ onSuccess }: DatasetUploadProps) => {
       setFile(null);
       setStatus("error");
       setMessage("Invalid file format. Please upload a .csv file.");
+      setProgress(0);
       return;
     }
 
     setFile(selected);
+    setProgress(0);
   };
 
   const handleUpload = async () => {
@@ -44,8 +48,13 @@ const DatasetUpload = ({ onSuccess }: DatasetUploadProps) => {
     try {
       setStatus("uploading");
       setMessage("Uploading dataset...");
-      await uploadDataset(file);
+      setProgress(0);
+      await uploadDataset(file, (percent) => {
+        setProgress(percent);
+        setMessage(`Uploading dataset... ${percent}%`);
+      });
       setStatus("success");
+      setProgress(100);
       setMessage("Dataset processed successfully.");
       if (onSuccess) {
         await onSuccess();
@@ -54,6 +63,7 @@ const DatasetUpload = ({ onSuccess }: DatasetUploadProps) => {
       const err = error as Error;
       setStatus("error");
       setMessage(err.message || "Upload failed. Please try again.");
+      setProgress(0);
     }
   };
 
@@ -93,6 +103,14 @@ const DatasetUpload = ({ onSuccess }: DatasetUploadProps) => {
         >
           {message}
         </p>
+      ) : null}
+      {status === "uploading" ? (
+        <div className="w-full h-2 rounded-full bg-slate-100 overflow-hidden">
+          <div
+            className="h-full bg-brand-orange transition-all"
+            style={{ width: `${progress}%` }}
+          />
+        </div>
       ) : null}
     </div>
   );

@@ -8,5 +8,8 @@ python-jose==3.3.0
 passlib[bcrypt]==1.7.4
 argon2-cffi==23.1.0
 pandas==2.2.3
+numpy==1.26.4
+scikit-learn==1.5.2
+prophet==1.1.5
 google-generativeai==0.8.3
 requests==2.32.3

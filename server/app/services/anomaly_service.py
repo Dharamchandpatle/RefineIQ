@@ -81,24 +81,26 @@ def build_alerts(limit: int) -> list[dict]:
     return alerts
 
 
-async def get_alerts_from_db(db, limit: int) -> list[dict]:
+async def get_alerts_from_db(db, limit: int, dataset_id: str | None = None) -> list[dict]:
     if db is None:
-        return build_alerts(limit)
+        return []
+    from app.services.dataset_service import get_active_dataset_id
 
-    cursor = db.anomaly_alerts.find().sort("timestamp", -1).limit(limit)
+    if dataset_id is None:
+        dataset_id = await get_active_dataset_id(db)
+    query = {"dataset_id": dataset_id} if dataset_id else {}
+
+    cursor = db.anomaly_alerts.find(query).sort("timestamp", -1).limit(limit)
     alerts = []
     async for item in cursor:
+        timestamp = item.get("timestamp") or item.get("date")
         alerts.append(
             {
                 "id": str(item.get("_id")),
                 "message": item.get("message"),
                 "severity": item.get("severity"),
-                "timestamp": item.get("timestamp"),
-                "source": item.get("source"),
+                "timestamp": timestamp,
+                "source": item.get("source") or item.get("unit_name"),
             }
         )
-
-    if not alerts:
-        return build_alerts(limit)
-
     return alerts

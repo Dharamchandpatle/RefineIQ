@@ -39,6 +39,10 @@ class KPISummary(BaseModel):
     avg_energy: float | None = None
     avg_sec: float | None = None
     anomaly_rate: float | None = None
+    total_records: int | None = None
+    total_anomalies: int | None = None
+    high_severity_count: int | None = None
+    predicted_energy_next_day: float | None = None
     last_updated: datetime
 
 

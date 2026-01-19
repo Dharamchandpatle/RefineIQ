@@ -8,10 +8,13 @@ from app.db.mongodb import close_mongo_connection, connect_to_mongo
 from app.routes.anomaly_routes import router as anomaly_router, router_api as anomaly_api_router
 from app.routes.auth_routes import router as auth_router
 from app.routes.chatbot_routes import router as chatbot_router, router_api as chatbot_api_router
+from app.routes.dashboard_routes import router_api as dashboard_api_router
+from app.routes.dataset_routes import router_api as dataset_api_router
 from app.routes.forecast_routes import router as forecast_router, router_api as forecast_api_router
 from app.routes.kpi_routes import router as kpi_router, router_api as kpi_api_router
 from app.routes.recommendation_routes import router as recommendation_router, router_api as recommendation_api_router
 from app.routes.upload_routes import router as upload_router
+from app.services.pipeline_service import load_ml_artifacts
 
 app = FastAPI(title="RefineryIQ API", version="1.0.0")
 
@@ -33,6 +36,7 @@ app.add_middleware(
 @app.on_event("startup")
 async def startup() -> None:
     await connect_to_mongo()
+    load_ml_artifacts()
 
 
 @app.on_event("shutdown")
@@ -56,4 +60,6 @@ app.include_router(anomaly_api_router)
 app.include_router(forecast_api_router)
 app.include_router(recommendation_api_router)
 app.include_router(chatbot_api_router)
+app.include_router(dashboard_api_router)
+app.include_router(dataset_api_router)
 app.include_router(upload_router)

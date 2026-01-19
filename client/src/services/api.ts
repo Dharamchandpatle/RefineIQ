@@ -5,6 +5,9 @@ export interface KPISummary {
   avg_energy?: number | null;
   avg_sec?: number | null;
   anomaly_rate?: number | null;
+  total_anomalies?: number | null;
+  high_severity_count?: number | null;
+  predicted_energy_next_day?: number | null;
   last_updated?: string;
 }
 
@@ -31,11 +34,39 @@ export interface RecommendationRecord {
   timestamp?: string | null;
 }
 
+export interface OperatorDashboardResponse {
+  totalActiveAnomalies: number;
+  highSeverityAlerts: number;
+  currentSEC: number | null;
+  predictedEnergyNextDay: number | null;
+  energyTrend: { date: string | null; value: number | null }[];
+  alerts: { severity: string; message: string; unit: string; timestamp: string | null }[];
+  recommendations: string[];
+}
+
+export interface AdminDashboardResponse {
+  totalAnomaliesOverall: number;
+  averageSEC: number | null;
+  forecastedEnergy: number | null;
+  optimizationImpact: number | null;
+  energyForecast: { date: string | null; value: number | null }[];
+  secForecast: { date: string | null; value: number | null }[];
+  recommendations: string[];
+}
+
 export interface UserRecord {
   id?: string | null;
   email: string;
   full_name?: string | null;
   role?: UserRole;
+  created_at?: string | null;
+}
+
+export interface DatasetRecord {
+  id: string;
+  name: string;
+  category?: string | null;
+  status?: string | null;
   created_at?: string | null;
 }
 
@@ -171,8 +202,8 @@ export const anomaliesApi = {
 };
 
 export const forecastsApi = {
-  getForecast: async (metric: "energy" | "sec" = "energy", limit = 100): Promise<ForecastRecord[]> =>
-    apiGet<ForecastRecord[]>(`/api/forecast?metric=${metric}&limit=${limit}`, {
+  getForecast: async (type: "energy" | "sec" = "energy", limit = 100): Promise<ForecastRecord[]> =>
+    apiGet<ForecastRecord[]>(`/api/forecast?type=${type}&metric=${type}&limit=${limit}`, {
       headers: getAuthHeader(),
     }),
 };
@@ -195,4 +226,30 @@ export const chatbotApi = {
 export const usersApi = {
   getAll: async (): Promise<UserRecord[]> =>
     apiGet<UserRecord[]>("/auth/users", { headers: getAuthHeader() }),
+};
+
+export const datasetsApi = {
+  list: async (): Promise<DatasetRecord[]> =>
+    apiGet<DatasetRecord[]>("/api/datasets", { headers: getAuthHeader() }),
+  getActive: async (): Promise<{ dataset_id: string | null }> =>
+    apiGet<{ dataset_id: string | null }>("/api/datasets/active", { headers: getAuthHeader() }),
+  setActive: async (datasetId: string): Promise<{ dataset_id: string }> =>
+    apiPost<{ dataset_id: string }>(`/api/datasets/active/${datasetId}`, undefined, {
+      headers: getAuthHeader(),
+    }),
+};
+
+export const dashboardApi = {
+  getOperator: async (datasetId?: string | null): Promise<OperatorDashboardResponse> => {
+    const query = datasetId ? `?dataset_id=${datasetId}` : "";
+    return apiGet<OperatorDashboardResponse>(`/api/dashboard/operator${query}`, {
+      headers: getAuthHeader(),
+    });
+  },
+  getAdmin: async (datasetId?: string | null): Promise<AdminDashboardResponse> => {
+    const query = datasetId ? `?dataset_id=${datasetId}` : "";
+    return apiGet<AdminDashboardResponse>(`/api/dashboard/admin${query}`, {
+      headers: getAuthHeader(),
+    });
+  },
 };

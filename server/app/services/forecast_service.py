@@ -32,23 +32,33 @@ def load_forecast(file_name: str, metric: str, limit: int) -> list[dict]:
     return records
 
 
-async def get_forecast_from_db(db, metric: str, limit: int) -> list[dict]:
+async def get_forecast_from_db(db, metric: str, limit: int, dataset_id: str | None = None) -> list[dict]:
     if db is None:
-        return load_forecast("energy_forecast.csv" if metric == "energy" else "sec_forecast.csv", metric, limit)
+        return []
+    from app.services.dataset_service import get_active_dataset_id
 
-    cursor = db.forecast_summary.find({"metric": metric}).sort("created_at", -1).limit(limit)
+    if dataset_id is None:
+        dataset_id = await get_active_dataset_id(db)
+    query = {}
+    if dataset_id:
+        query["dataset_id"] = dataset_id
+
     records = []
+    cursor = db.forecast_results.find({"type": metric, **query}).sort("ds", -1).limit(limit)
     async for item in cursor:
+        ds_value = item.get("ds")
+        if hasattr(ds_value, "isoformat"):
+            ds_value = ds_value.isoformat()
         records.append(
             {
-                "timestamp": item.get("latest_timestamp"),
-                "value": item.get("latest_value"),
+                "timestamp": ds_value,
+                "value": item.get("yhat"),
                 "metric": metric,
                 "raw": item,
             }
         )
 
-    if not records:
-        return load_forecast("energy_forecast.csv" if metric == "energy" else "sec_forecast.csv", metric, limit)
+    if records:
+        return list(reversed(records))
 
-    return records
+    return []

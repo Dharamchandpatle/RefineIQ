@@ -7,6 +7,7 @@ from motor.motor_asyncio import AsyncIOMotorDatabase
 from app.db.mongodb import get_db
 from app.services.auth_service import require_admin
 from app.services.pipeline_service import run_pipeline, save_uploaded_file
+from app.services.dataset_service import create_dataset_record
 
 router = APIRouter(prefix="/api", tags=["dataset"])
 
@@ -30,10 +31,15 @@ async def upload_dataset(
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to save file") from exc
 
     try:
-        await run_pipeline(Path(saved_path), db)
+        dataset = await create_dataset_record(db, file.filename)
+        await run_pipeline(Path(saved_path), db, dataset_id=dataset["id"])
     except ValueError as exc:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
     except Exception as exc:
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Pipeline execution failed") from exc
+        print("PIPELINE ERROR:", str(exc))
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
 
-    return {"status": "Dataset uploaded and AI analysis completed"}
+    return {
+        "status": "Dataset uploaded and AI analysis completed",
+        "dataset_id": dataset["id"],
+    }

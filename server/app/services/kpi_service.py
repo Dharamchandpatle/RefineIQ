@@ -1,96 +1,62 @@
 from __future__ import annotations
 
 from datetime import datetime, timezone
-from pathlib import Path
-
-import pandas as pd
-
-from app.config import settings
 
 
-def _resolve_path(file_name: str) -> Path:
-    return Path(settings.data_dir) / file_name
-
-
-def _find_column(df: pd.DataFrame, candidates: list[str]) -> str | None:
-    lowered = {col.lower(): col for col in df.columns}
-    for name in candidates:
-        if name.lower() in lowered:
-            return lowered[name.lower()]
-    return None
-
-
-def _safe_float(value) -> float | None:
-    try:
-        if pd.isna(value):
-            return None
-        return float(value)
-    except Exception:
-        return None
-
-
-def compute_kpi_summary() -> dict:
-    file_path = _resolve_path("final_refinery_data_with_anomalies.csv")
-    if not file_path.exists():
-        return {
-            "total_energy": None,
-            "avg_energy": None,
-            "avg_sec": None,
-            "anomaly_rate": None,
-            "last_updated": datetime.now(timezone.utc),
-        }
-
-    df = pd.read_csv(file_path)
-    energy_col = _find_column(
-        df,
-        ["energy", "energy_consumption", "total_energy", "energy_kwh", "consumption"],
-    )
-    sec_col = _find_column(df, ["sec", "specific_energy_consumption", "sec_value"])
-    anomaly_col = _find_column(df, ["anomaly", "is_anomaly", "anomaly_flag"])
-
-    total_energy = _safe_float(df[energy_col].sum()) if energy_col else None
-    avg_energy = _safe_float(df[energy_col].mean()) if energy_col else None
-    avg_sec = _safe_float(df[sec_col].mean()) if sec_col else None
-
-    anomaly_rate = None
-    if anomaly_col and len(df.index) > 0:
-        try:
-            anomaly_rate = float(df[anomaly_col].sum()) / float(len(df.index))
-        except Exception:
-            anomaly_rate = None
-
+def _empty_summary() -> dict:
     return {
-        "total_energy": total_energy,
-        "avg_energy": avg_energy,
-        "avg_sec": avg_sec,
-        "anomaly_rate": anomaly_rate,
+        "total_energy": None,
+        "avg_energy": None,
+        "avg_sec": None,
+        "anomaly_rate": None,
+        "total_records": None,
+        "total_anomalies": None,
+        "high_severity_count": None,
+        "predicted_energy_next_day": None,
+        "current_sec": None,
+        "recent_energy_trend": [],
         "last_updated": datetime.now(timezone.utc),
     }
 
 
-async def get_latest_snapshot(db) -> dict:
+async def get_latest_snapshot(db, dataset_id: str | None = None) -> dict:
     if db is None:
-        return compute_kpi_summary()
+        return _empty_summary()
+    from app.services.dataset_service import get_active_dataset_id
 
-    snapshot = await db.kpi_snapshots.find_one(sort=[("timestamp", -1)])
+    if dataset_id is None:
+        dataset_id = await get_active_dataset_id(db)
+    query = {"dataset_id": dataset_id} if dataset_id else {}
+
+    snapshot = await db.kpi_snapshots.find_one(query, sort=[("timestamp", -1)])
     if snapshot:
         return {
             "total_energy": snapshot.get("total_energy"),
             "avg_energy": snapshot.get("avg_energy"),
             "avg_sec": snapshot.get("avg_sec"),
             "anomaly_rate": snapshot.get("anomaly_rate"),
+            "total_records": snapshot.get("total_records"),
+            "total_anomalies": snapshot.get("total_anomalies"),
+            "high_severity_count": snapshot.get("high_severity_count"),
+            "predicted_energy_next_day": snapshot.get("predicted_energy_next_day"),
+            "current_sec": snapshot.get("current_sec"),
+            "recent_energy_trend": snapshot.get("recent_energy_trend") or [],
             "last_updated": snapshot.get("timestamp") or snapshot.get("last_updated"),
             "id": str(snapshot.get("_id")),
         }
 
-    return compute_kpi_summary()
+    return _empty_summary()
 
 
 async def list_snapshots(db, limit: int) -> list[dict]:
     if db is None:
         return []
+    from app.services.dataset_service import get_active_dataset_id
 
-    cursor = db.kpi_snapshots.find().sort("timestamp", -1).limit(limit)
+    dataset_id = await get_active_dataset_id(db)
+    query = {"dataset_id": dataset_id} if dataset_id else {}
+
+    cursor = db.kpi_snapshots.find(query).sort("timestamp", -1).limit(limit)
     snapshots = []
     async for item in cursor:
         snapshots.append(
@@ -100,6 +66,10 @@ async def list_snapshots(db, limit: int) -> list[dict]:
                 "avg_energy": item.get("avg_energy"),
                 "avg_sec": item.get("avg_sec"),
                 "anomaly_rate": item.get("anomaly_rate"),
+                "total_records": item.get("total_records"),
+                "total_anomalies": item.get("total_anomalies"),
+                "high_severity_count": item.get("high_severity_count"),
+                "predicted_energy_next_day": item.get("predicted_energy_next_day"),
                 "last_updated": item.get("timestamp") or item.get("last_updated"),
             }
         )

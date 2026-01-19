@@ -2,67 +2,101 @@ import AlertTable from "@/components/AlertTable";
 import EnergyChart from "@/components/EnergyChart";
 import KpiCard from "@/components/KpiCard";
 import RecommendationPanel from "@/components/RecommendationPanel";
+import DatasetSelector from "@/components/dashboard/DatasetSelector";
 import FluidLoader from "@/components/ui/FluidLoader";
 import {
-    anomaliesApi,
-    forecastsApi,
-    kpiApi,
-    recommendationsApi,
-    type AlertRecord,
-    type RecommendationRecord,
+  dashboardApi,
+  type AlertRecord,
+  type RecommendationRecord,
 } from "@/services/api";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { toast } from "sonner";
 
 const OperatorDashboard = () => {
   const [alerts, setAlerts] = useState<AlertRecord[]>([]);
   const [energyTrend, setEnergyTrend] = useState<{ label: string; value: number }[]>([]);
   const [recommendations, setRecommendations] = useState<RecommendationRecord[]>([]);
-  const [summary, setSummary] = useState({ avg_sec: 0 });
+  const [summary, setSummary] = useState({
+    totalActiveAnomalies: 0,
+    highSeverityAlerts: 0,
+    currentSEC: null as number | null,
+    predictedEnergyNextDay: null as number | null,
+  });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [unitFilter, setUnitFilter] = useState("all");
   const [dateFilter, setDateFilter] = useState("all");
+  const lastAlertKey = useRef<string | null>(null);
+
+  const loadData = async (datasetId?: string | null) => {
+    setLoading(true);
+    setError("");
+    try {
+      const data = await dashboardApi.getOperator(datasetId);
+
+      setSummary({
+        totalActiveAnomalies: data.totalActiveAnomalies ?? 0,
+        highSeverityAlerts: data.highSeverityAlerts ?? 0,
+        currentSEC: data.currentSEC ?? null,
+        predictedEnergyNextDay: data.predictedEnergyNextDay ?? null,
+      });
+
+      setAlerts(
+        (data.alerts || []).map((alert, index) => ({
+          id: `${index}`,
+          message: alert.message,
+          severity: alert.severity,
+          timestamp: alert.timestamp,
+          source: alert.unit,
+        }))
+      );
+
+      setRecommendations(
+        (data.recommendations || []).map((rec, index) => ({
+          id: `${index}`,
+          title: rec,
+        }))
+      );
+
+      setEnergyTrend(
+        (data.energyTrend || []).map((item, index) => ({
+          label: item.date ? new Date(item.date).toLocaleDateString() : `T${index + 1}`,
+          value: item.value || 0,
+        }))
+      );
+    } catch (err) {
+      setError("Unable to load dashboard data");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const loadData = async () => {
-      setLoading(true);
-      setError("");
-      try {
-        const [summaryData, alertData, forecastData, recs] = await Promise.all([
-          kpiApi.getSummary(),
-          anomaliesApi.getAlerts(),
-          forecastsApi.getForecast("energy"),
-          recommendationsApi.getAll(),
-        ]);
-
-        setSummary({ avg_sec: summaryData.avg_sec || 0 });
-        setAlerts(alertData || []);
-        setRecommendations(recs || []);
-        setEnergyTrend(
-          (forecastData || []).slice(-14).map((item, index) => ({
-            label: item.timestamp ? new Date(item.timestamp).toLocaleDateString() : `T${index + 1}`,
-            value: item.value || 0,
-          }))
-        );
-      } catch (err) {
-        setError("Unable to load operator dashboard data.");
-      } finally {
-        setLoading(false);
-      }
-    };
-
     loadData();
   }, []);
 
-  const highSeverity = useMemo(
-    () => alerts.filter((alert) => alert.severity?.toLowerCase() === "high").length,
-    [alerts]
-  );
+  useEffect(() => {
+    if (alerts.length === 0) return;
+    const latest = alerts[0];
+    const key = `${latest.message}-${latest.timestamp}-${latest.severity}`;
+    if (lastAlertKey.current === key) return;
+    lastAlertKey.current = key;
 
-  const predictedEnergy = useMemo(() => {
-    if (energyTrend.length === 0) return "N/A";
-    return `${energyTrend[energyTrend.length - 1].value.toFixed(2)}`;
-  }, [energyTrend]);
+    const severity = latest.severity?.toLowerCase();
+    const title = "Latest alert detected";
+    const description = latest.message || "Anomaly detected in refinery operations.";
+    if (severity === "critical" || severity === "high") {
+      toast.error(title, { description });
+    } else if (severity === "medium") {
+      toast.warning(title, { description });
+    } else {
+      toast.info(title, { description });
+    }
+  }, [alerts]);
+
+  const highSeverity = summary.highSeverityAlerts;
+
+  const predictedEnergy = summary.predictedEnergyNextDay ?? null;
 
   const deriveUnit = (source?: string | null) => {
     if (!source) return "Unknown";
@@ -127,13 +161,19 @@ const OperatorDashboard = () => {
         <p className="text-sm text-slate-500">Real-time monitoring and operational actions.</p>
       </header>
 
+      <DatasetSelector onDatasetChange={loadData} />
+
       {error ? <p className="text-sm text-brand-orange">{error}</p> : null}
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <KpiCard label="Total Active Anomalies" value={alerts.length} />
+        <KpiCard label="Total Active Anomalies" value={summary.totalActiveAnomalies} />
         <KpiCard label="High Severity Alerts" value={highSeverity} />
-        <KpiCard label="Current SEC" value={summary.avg_sec ? summary.avg_sec.toFixed(4) : "N/A"} unit="MWh/bbl" />
-        <KpiCard label="Predicted Energy (Next Day)" value={predictedEnergy} unit="MWh" />
+        <KpiCard label="Current SEC" value={summary.currentSEC ? summary.currentSEC.toFixed(4) : "N/A"} unit="MWh/bbl" />
+        <KpiCard
+          label="Predicted Energy (Next Day)"
+          value={predictedEnergy !== null ? predictedEnergy.toFixed(2) : "N/A"}
+          unit="MWh"
+        />
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">

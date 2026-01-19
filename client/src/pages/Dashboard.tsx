@@ -71,28 +71,28 @@ const Dashboard = () => {
         setKpis([
           {
             name: "Average SEC",
-            value: kpiSummary.avg_sec || 0,
+            value: kpiSummary.avg_sec ?? 0,
             unit: "MWh/bbl",
             trend: "stable",
             changePercent: 0,
           },
           {
             name: "Average Energy",
-            value: kpiSummary.avg_energy || 0,
+            value: kpiSummary.avg_energy ?? 0,
             unit: "MWh",
             trend: "stable",
             changePercent: 0,
           },
           {
             name: "Total Energy",
-            value: kpiSummary.total_energy || 0,
+            value: kpiSummary.total_energy ?? 0,
             unit: "MWh",
             trend: "stable",
             changePercent: 0,
           },
           {
             name: "Anomaly Rate",
-            value: kpiSummary.anomaly_rate ? kpiSummary.anomaly_rate * 100 : 0,
+            value: kpiSummary.anomaly_rate ?? 0,
             unit: "%",
             trend: "stable",
             changePercent: 0,

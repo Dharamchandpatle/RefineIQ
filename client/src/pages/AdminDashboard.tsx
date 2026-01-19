@@ -3,57 +3,62 @@ import KpiCard from "@/components/KpiCard";
 import RecommendationPanel from "@/components/RecommendationPanel";
 import UserOverview from "@/components/UserOverview";
 import DatasetUpload from "@/components/admin/DatasetUpload";
+import DatasetSelector from "@/components/dashboard/DatasetSelector";
 import FluidLoader from "@/components/ui/FluidLoader";
 import {
-    forecastsApi,
-    kpiApi,
-    recommendationsApi,
+    dashboardApi,
     type RecommendationRecord,
 } from "@/services/api";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 const AdminDashboard = () => {
-  const [summary, setSummary] = useState({ avg_sec: 0, total_energy: 0, anomaly_rate: 0 });
+  const [summary, setSummary] = useState({
+    totalAnomaliesOverall: 0,
+    averageSEC: null as number | null,
+    forecastedEnergy: null as number | null,
+    optimizationImpact: null as number | null,
+  });
   const [energyForecast, setEnergyForecast] = useState<{ label: string; value: number }[]>([]);
   const [secForecast, setSecForecast] = useState<{ label: string; value: number }[]>([]);
   const [recommendations, setRecommendations] = useState<RecommendationRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  const loadData = useCallback(async () => {
+  const loadData = useCallback(async (datasetId?: string | null) => {
     setLoading(true);
     setError("");
     try {
-      const [summaryData, energyData, secData, recs] = await Promise.all([
-        kpiApi.getSummary(),
-        forecastsApi.getForecast("energy"),
-        forecastsApi.getForecast("sec"),
-        recommendationsApi.getAll(),
-      ]);
+      const data = await dashboardApi.getAdmin(datasetId);
 
       setSummary({
-        avg_sec: summaryData.avg_sec || 0,
-        total_energy: summaryData.total_energy || 0,
-        anomaly_rate: summaryData.anomaly_rate || 0,
+        totalAnomaliesOverall: data.totalAnomaliesOverall ?? 0,
+        averageSEC: data.averageSEC ?? null,
+        forecastedEnergy: data.forecastedEnergy ?? null,
+        optimizationImpact: data.optimizationImpact ?? null,
       });
 
       setEnergyForecast(
-        (energyData || []).slice(-30).map((item, index) => ({
-          label: item.timestamp ? new Date(item.timestamp).toLocaleDateString() : `T${index + 1}`,
+        (data.energyForecast || []).map((item, index) => ({
+          label: item.date ? new Date(item.date).toLocaleDateString() : `T${index + 1}`,
           value: item.value || 0,
         }))
       );
 
       setSecForecast(
-        (secData || []).slice(-30).map((item, index) => ({
-          label: item.timestamp ? new Date(item.timestamp).toLocaleDateString() : `T${index + 1}`,
+        (data.secForecast || []).map((item, index) => ({
+          label: item.date ? new Date(item.date).toLocaleDateString() : `T${index + 1}`,
           value: item.value || 0,
         }))
       );
 
-      setRecommendations(recs || []);
+      setRecommendations(
+        (data.recommendations || []).map((rec, index) => ({
+          id: `${index}`,
+          title: rec,
+        }))
+      );
     } catch (err) {
-      setError("Unable to load admin dashboard data.");
+      setError("Unable to load dashboard data");
     } finally {
       setLoading(false);
     }
@@ -63,10 +68,7 @@ const AdminDashboard = () => {
     loadData();
   }, [loadData]);
 
-  const forecastedEnergy = useMemo(() => {
-    if (energyForecast.length === 0) return "N/A";
-    return `${energyForecast[energyForecast.length - 1].value.toFixed(2)}`;
-  }, [energyForecast]);
+  const forecastedEnergy = summary.forecastedEnergy ?? null;
 
   if (loading) {
     return (
@@ -85,12 +87,18 @@ const AdminDashboard = () => {
 
       <DatasetUpload onSuccess={loadData} />
 
+      <DatasetSelector onDatasetChange={loadData} />
+
       {error ? <p className="text-sm text-brand-orange">{error}</p> : null}
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <KpiCard label="Total Anomalies (overall)" value={summary.anomaly_rate ? `${summary.anomaly_rate.toFixed(2)}%` : "N/A"} />
-        <KpiCard label="Average SEC Trend" value={summary.avg_sec ? summary.avg_sec.toFixed(4) : "N/A"} unit="MWh/bbl" />
-        <KpiCard label="Forecasted Energy Consumption" value={forecastedEnergy} unit="MWh" />
+        <KpiCard label="Total Anomalies (overall)" value={summary.totalAnomaliesOverall ?? "N/A"} />
+        <KpiCard label="Average SEC Trend" value={summary.averageSEC ? summary.averageSEC.toFixed(4) : "N/A"} unit="MWh/bbl" />
+        <KpiCard
+          label="Forecasted Energy Consumption"
+          value={forecastedEnergy !== null ? forecastedEnergy.toFixed(2) : "N/A"}
+          unit="MWh"
+        />
         <KpiCard label="Optimization Impact / Estimated Savings" value={recommendations.length ? `${recommendations.length} initiatives` : "N/A"} />
       </div>
 

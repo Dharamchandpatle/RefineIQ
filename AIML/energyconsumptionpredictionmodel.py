@@ -19,13 +19,13 @@ Energy Consumption & SEC Prediction (Prophet)
 
 # Energy Consumption & SEC Prediction (Prophet)
 
-!pip install prophet
+# !pip install prophet
 
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-
 from prophet import Prophet
+from google.colab import files
 
 # UPLOAD DATASET (AUTOMATION ENTRY POINT)
 
@@ -34,7 +34,6 @@ file_name = list(uploaded.keys())[0]
 
 df = pd.read_csv(file_name)
 print("Dataset uploaded:", file_name)
-
 df.head()
 
 # BASIC DATA CLEANING (REQUIRED)
@@ -66,21 +65,45 @@ print("Cleaning completed")
 
 df.info()
 
-# FEATURE ENGINEERING (VERY IMPORTANT)
+# =========================
+# ROBUST FEATURE ENGINEERING (ONE CELL)
+# =========================
 
+import pandas as pd
+import numpy as np
 
+# ---- Column auto-mapping ----
+column_map = {
+    "electricity_kwh": ["electricity_kwh", "electricity", "elec_kwh", "power_kwh", "energy_kwh"],
+    "steam_usage": ["steam_usage", "steam", "steam_kwh"],
+    "fuel_usage": ["fuel_usage", "fuel", "fuel_kwh"],
+    "production_tons": ["production_tons", "production", "output_tons"]
+}
 
-# Total energy
+for standard_col, possible_cols in column_map.items():
+    for col in possible_cols:
+        if col in df.columns:
+            df[standard_col] = df[col]
+            break
+
+# ---- Final validation ----
+required_cols = ["electricity_kwh", "steam_usage", "fuel_usage", "production_tons"]
+missing = [c for c in required_cols if c not in df.columns]
+
+if missing:
+    raise ValueError(f"Missing required columns: {missing}")
+
+# ---- Feature Engineering ----
 df["total_energy"] = (
     df["electricity_kwh"] +
     df["steam_usage"] +
     df["fuel_usage"]
 )
 
-# SEC
 df["SEC"] = df["total_energy"] / df["production_tons"]
 
-df.head()
+print("Feature engineering completed successfully")
+df[required_cols + ["total_energy", "SEC"]].head()
 
 # AGGREGATE DATA (TIME-SERIES FORMAT)
 # Daily aggregation (best for refinery planning)
@@ -102,11 +125,19 @@ daily_df.head()
 # TRAIN ENERGY CONSUMPTION MODEL
 
 
+# Energy Forecast Dataset///////
 energy_ts = daily_df.rename(columns={
     "date": "ds",
     "total_energy": "y"
 })
 
+# 🔹 SEC Forecast Dataset
+sec_ts = daily_df.rename(columns={
+    "date": "ds",
+    "SEC": "y"
+})
+
+# TRAIN ENERGY FORECAST MODEL
 energy_model = Prophet(
     yearly_seasonality=True,
     weekly_seasonality=True,
@@ -133,6 +164,8 @@ plt.xlabel("Date")
 plt.ylabel("Total Energy")
 plt.show()
 
+
+
 # PREPARE SEC FORECAST DATASET
 
 # SEC FORECAST MODEL (AUTO)
@@ -143,8 +176,11 @@ sec_ts = daily_df.rename(columns={
     "SEC": "y"
 })
 
+# RAIN SEC FORECAST MODEL
+
 sec_model = Prophet(
     yearly_seasonality=True,
+    weekly_seasonality=False,
     changepoint_prior_scale=0.1
 )
 
@@ -190,3 +226,39 @@ print("Forecast files saved automatically")
 # DOWNLOAD RESULTS
 # files.download("energy_forecast.csv")
 # files.download("sec_forecast.csv")
+
+from sklearn.metrics import mean_absolute_error, mean_squared_error
+import numpy as np
+
+# Split actual & predicted
+actual = energy_ts.tail(30)["y"].values
+predicted = energy_forecast.tail(30)["yhat"].values
+
+# MAE
+mae = mean_absolute_error(actual, predicted)
+
+# RMSE (manual – version safe)
+rmse = np.sqrt(mean_squared_error(actual, predicted))
+
+print("MAE:", mae)
+print("RMSE:", rmse)
+
+# UNIT-WISE FORECASTING (FUTURE SCOPE)
+for unit in df["unit_name"].unique():
+    unit_df = df[df["unit_name"] == unit]
+
+    daily_unit = unit_df.groupby("date").agg({
+        "total_energy": "sum"
+    }).reset_index()
+
+    unit_ts = daily_unit.rename(columns={"date": "ds", "total_energy": "y"})
+
+    model = Prophet()
+    model.fit(unit_ts)
+
+    future = model.make_future_dataframe(periods=30)
+    forecast = model.predict(future)
+
+    model.plot(forecast)
+    plt.title(f"Energy Forecast – {unit}")
+    plt.show()

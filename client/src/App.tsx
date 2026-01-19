@@ -1,6 +1,6 @@
 import AppShell from "@/components/layout/AppShell";
 import { ThemeProvider } from "@/components/ui/theme-provider";
-import { AuthContext, useAuthState } from "@/hooks/useAuth";
+import { AuthContext, useAuth, useAuthState } from "@/hooks/useAuth";
 import AdminDashboard from "@/pages/AdminDashboard";
 import HomePage from "@/pages/HomePage";
 import Login from "@/pages/Login";
@@ -30,12 +30,10 @@ const ProtectedRoute = ({
 };
 
 const RoleRedirect = () => {
-  // Auth checks temporarily disabled
-  // const { user, isAuthenticated, isLoading } = useAuth();
-  // if (isLoading) return null;
-  // if (!isAuthenticated) return <Navigate to="/login" replace />;
-  // return <Navigate to={user?.role === "ADMIN" ? "/dashboard/admin" : "/dashboard/operator"} replace />;
-  return <Navigate to="/dashboard/operator" replace />;
+  const { user, isAuthenticated, isLoading } = useAuth();
+  if (isLoading) return null;
+  if (!isAuthenticated) return <Navigate to="/login" replace />;
+  return <Navigate to={user?.role === "ADMIN" ? "/dashboard/admin" : "/dashboard/operator"} replace />;
 };
 
 const AppRoutes = () => {
