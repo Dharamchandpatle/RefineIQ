@@ -9,7 +9,7 @@ from pydantic import BaseModel, EmailStr, Field
 class UserBase(BaseModel):
     email: EmailStr
     full_name: str | None = None
-    role: str = "operator"
+    role: str = "OPERATOR"
 
 
 class UserCreate(UserBase):
@@ -30,6 +30,8 @@ class Token(BaseModel):
     access_token: str
     token_type: str = "bearer"
     expires_in: int
+    role: str | None = None
+    user: dict[str, Any] | None = None
 
 
 class KPISummary(BaseModel):

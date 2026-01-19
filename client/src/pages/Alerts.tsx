@@ -3,36 +3,33 @@
  * Comprehensive view of all system alerts
  */
 
-import { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import {
-  AlertTriangle,
-  AlertCircle,
-  Info,
-  CheckCircle,
-  Clock,
-  Filter,
-  Bell,
-  BellOff,
-} from "lucide-react";
-import BackgroundComponent from "@/components/ui/background-components";
-import Sidebar from "@/components/layout/Sidebar";
 import AIChatbot from "@/components/chatbot/AIChatbot";
+import Sidebar from "@/components/layout/Sidebar";
+import BackgroundComponent from "@/components/ui/background-components";
 import { Button } from "@/components/ui/button";
-import { alertsApi } from "@/services/api";
-import { type Alert } from "@/data/mockData";
 import { cn } from "@/lib/utils";
+import { anomaliesApi, type AlertRecord } from "@/services/api";
+import { AnimatePresence, motion } from "framer-motion";
+import {
+    AlertCircle,
+    AlertTriangle,
+    Bell,
+    CheckCircle,
+    Clock,
+    Filter,
+    Info,
+} from "lucide-react";
+import { useEffect, useState } from "react";
 
 const Alerts = () => {
-  const [alerts, setAlerts] = useState<Alert[]>([]);
+  const [alerts, setAlerts] = useState<AlertRecord[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [typeFilter, setTypeFilter] = useState<string | null>(null);
-  const [showAcknowledged, setShowAcknowledged] = useState(true);
 
   useEffect(() => {
     const fetchAlerts = async () => {
       try {
-        const data = await alertsApi.getAll();
+        const data = await anomaliesApi.getAlerts(200);
         setAlerts(data);
       } catch (error) {
         console.error("Failed to fetch alerts:", error);
@@ -44,8 +41,17 @@ const Alerts = () => {
     fetchAlerts();
   }, []);
 
-  const getAlertConfig = (type: Alert["type"]) => {
-    switch (type) {
+  const normalizeSeverity = (severity?: string) => {
+    const normalized = severity?.toLowerCase();
+    if (normalized === "critical") return "critical";
+    if (normalized === "high") return "warning";
+    if (normalized === "medium") return "warning";
+    if (normalized === "low") return "info";
+    return "info";
+  };
+
+  const getAlertConfig = (severity?: string) => {
+    switch (normalizeSeverity(severity)) {
       case "critical":
         return {
           icon: AlertCircle,
@@ -63,19 +69,12 @@ const Alerts = () => {
           glow: "shadow-[0_0_20px_hsl(38_92%_50%/0.3)]",
         };
       case "info":
+      default:
         return {
           icon: Info,
           color: "text-secondary",
           bg: "bg-secondary/10",
           border: "border-secondary/30",
-          glow: "",
-        };
-      default:
-        return {
-          icon: Info,
-          color: "text-muted-foreground",
-          bg: "bg-muted",
-          border: "border-muted",
           glow: "",
         };
     }
@@ -96,30 +95,22 @@ const Alerts = () => {
     }
   };
 
-  const handleAcknowledge = async (alertId: string) => {
-    await alertsApi.acknowledge(alertId);
-    setAlerts((prev) =>
-      prev.map((a) => (a.id === alertId ? { ...a, acknowledged: true } : a))
-    );
-  };
-
   const filteredAlerts = alerts
-    .filter((alert) => !typeFilter || alert.type === typeFilter)
-    .filter((alert) => showAcknowledged || !alert.acknowledged)
+    .filter((alert) => !typeFilter || normalizeSeverity(alert.severity) === typeFilter)
     .sort((a, b) => {
-      const priority = { critical: 0, warning: 1, info: 2 };
-      if (priority[a.type] !== priority[b.type]) {
-        return priority[a.type] - priority[b.type];
+      const priority = { critical: 0, warning: 1, info: 2 } as const;
+      const aType = normalizeSeverity(a.severity);
+      const bType = normalizeSeverity(b.severity);
+      if (priority[aType] !== priority[bType]) {
+        return priority[aType] - priority[bType];
       }
-      return new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime();
+      return new Date(b.timestamp || 0).getTime() - new Date(a.timestamp || 0).getTime();
     });
 
   const alertCounts = alerts.reduce(
     (acc, alert) => {
-      acc[alert.type] = (acc[alert.type] || 0) + 1;
-      if (!alert.acknowledged) {
-        acc.unacknowledged = (acc.unacknowledged || 0) + 1;
-      }
+      const severity = normalizeSeverity(alert.severity);
+      acc[severity] = (acc[severity] || 0) + 1;
       return acc;
     },
     {} as Record<string, number>
@@ -161,7 +152,7 @@ const Alerts = () => {
                 </p>
               </div>
 
-              {alertCounts.unacknowledged > 0 && (
+              {alertCounts.critical > 0 && (
                 <motion.div
                   animate={{ scale: [1, 1.1, 1] }}
                   transition={{ duration: 2, repeat: Infinity }}
@@ -169,7 +160,7 @@ const Alerts = () => {
                 >
                   <Bell className="w-5 h-5 text-destructive" />
                   <span className="font-medium text-destructive">
-                    {alertCounts.unacknowledged} unacknowledged
+                    {alertCounts.critical} critical
                   </span>
                 </motion.div>
               )}
@@ -213,30 +204,20 @@ const Alerts = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3 }}
-              onClick={() => setShowAcknowledged(!showAcknowledged)}
-              className={cn(
-                "glass-card p-4 text-left transition-all",
-                !showAcknowledged && "ring-2 ring-primary"
-              )}
+              className={cn("glass-card p-4 text-left transition-all")}
             >
               <div className="flex items-center gap-2 mb-2">
-                {showAcknowledged ? (
-                  <Bell className="w-5 h-5 text-muted-foreground" />
-                ) : (
-                  <BellOff className="w-5 h-5 text-primary" />
-                )}
-                <span className="text-sm text-muted-foreground">
-                  {showAcknowledged ? "All" : "Active Only"}
-                </span>
+                <Bell className="w-5 h-5 text-muted-foreground" />
+                <span className="text-sm text-muted-foreground">Total Alerts</span>
               </div>
               <p className="font-orbitron font-bold text-2xl">
-                {showAcknowledged ? alerts.length : alertCounts.unacknowledged || 0}
+                {alerts.length}
               </p>
             </motion.button>
           </div>
 
           {/* Filter indicator */}
-          {(typeFilter || !showAcknowledged) && (
+          {typeFilter && (
             <motion.div
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: "auto" }}
@@ -246,7 +227,6 @@ const Alerts = () => {
                 variant="outline"
                 onClick={() => {
                   setTypeFilter(null);
-                  setShowAcknowledged(true);
                 }}
                 className="border-white/10"
               >
@@ -260,7 +240,7 @@ const Alerts = () => {
           <div className="space-y-4">
             <AnimatePresence>
               {filteredAlerts.map((alert, index) => {
-                const config = getAlertConfig(alert.type);
+                const config = getAlertConfig(alert.severity);
                 const Icon = config.icon;
 
                 return (
@@ -273,8 +253,7 @@ const Alerts = () => {
                     className={cn(
                       "glass-card p-5 border-l-4 transition-all",
                       config.border,
-                      !alert.acknowledged && config.glow,
-                      alert.acknowledged && "opacity-60"
+                      config.glow
                     )}
                   >
                     <div className="flex items-start gap-4">
@@ -297,39 +276,24 @@ const Alerts = () => {
                               config.color
                             )}
                           >
-                            {alert.type}
+                            {normalizeSeverity(alert.severity)}
                           </span>
-                          <span className="px-2 py-0.5 rounded text-xs bg-primary/20 text-primary border border-primary/30">
-                            {alert.unitId}
-                          </span>
+                          {alert.source ? (
+                            <span className="px-2 py-0.5 rounded text-xs bg-primary/20 text-primary border border-primary/30">
+                              {alert.source}
+                            </span>
+                          ) : null}
                           <span className="text-xs text-muted-foreground flex items-center gap-1">
                             <Clock className="w-3 h-3" />
-                            {formatTime(alert.timestamp)}
+                            {alert.timestamp ? formatTime(alert.timestamp) : "-"}
                           </span>
                         </div>
 
                         <p className="text-foreground mb-2">{alert.message}</p>
-
-                        {alert.acknowledged ? (
-                          <div className="flex items-center gap-2 text-sm text-success">
-                            <CheckCircle className="w-4 h-4" />
-                            <span>Acknowledged</span>
-                          </div>
-                        ) : (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleAcknowledge(alert.id)}
-                            className="border-success/30 text-success hover:bg-success/10"
-                          >
-                            <CheckCircle className="w-4 h-4 mr-2" />
-                            Acknowledge
-                          </Button>
-                        )}
                       </div>
 
                       {/* Critical alert pulse */}
-                      {alert.type === "critical" && !alert.acknowledged && (
+                      {normalizeSeverity(alert.severity) === "critical" && (
                         <motion.div
                           animate={{ scale: [1, 1.2, 1] }}
                           transition={{ duration: 1, repeat: Infinity }}

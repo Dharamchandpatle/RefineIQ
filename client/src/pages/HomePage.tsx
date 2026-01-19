@@ -1,16 +1,14 @@
-/**
- * Home Page
- * Attractive landing page with GSAP animated IOCL color background.
- */
-
 import FeatureCard from "@/components/home/FeatureCard";
 import { TypewriterText } from "@/components/home/TypewriterText";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
-import gsap from "gsap";
 import { Activity, ArrowRight, Brain, Shield, Zap } from "lucide-react";
-import { useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
+
+/**
+ * Home Page
+ * Content restored; background is handled globally by AppBackground.
+ */
 
 const features = [
   {
@@ -41,52 +39,10 @@ const features = [
 
 const HomePage = () => {
   const navigate = useNavigate();
-  const blobOrangeRef = useRef<HTMLDivElement | null>(null);
-  const blobBlueRef = useRef<HTMLDivElement | null>(null);
-  const blobAmberRef = useRef<HTMLDivElement | null>(null);
-
-  useEffect(() => {
-    const orange = blobOrangeRef.current;
-    const blue = blobBlueRef.current;
-    const amber = blobAmberRef.current;
-
-    if (!orange || !blue || !amber) return;
-
-    gsap.to(orange, {
-      x: 60,
-      y: -40,
-      duration: 8,
-      repeat: -1,
-      yoyo: true,
-      ease: "sine.inOut",
-    });
-    gsap.to(blue, {
-      x: -80,
-      y: 50,
-      duration: 10,
-      repeat: -1,
-      yoyo: true,
-      ease: "sine.inOut",
-    });
-    gsap.to(amber, {
-      x: 40,
-      y: 70,
-      duration: 9,
-      repeat: -1,
-      yoyo: true,
-      ease: "sine.inOut",
-    });
-  }, []);
 
   return (
     <div className="space-y-20">
       <section className="relative overflow-hidden rounded-3xl border border-slate-200 bg-white/60 p-10 md:p-16">
-        <div className="absolute inset-0 -z-10">
-          <div className="absolute -top-10 -left-10 h-64 w-64 rounded-full bg-[#F37021]/30 blur-3xl" ref={blobOrangeRef} />
-          <div className="absolute top-24 right-10 h-72 w-72 rounded-full bg-[#003A8F]/25 blur-3xl" ref={blobBlueRef} />
-          <div className="absolute -bottom-16 left-1/3 h-72 w-72 rounded-full bg-[#FFB74D]/30 blur-3xl" ref={blobAmberRef} />
-        </div>
-
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}

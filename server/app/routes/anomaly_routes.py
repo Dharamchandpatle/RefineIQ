@@ -1,11 +1,13 @@
 from __future__ import annotations
 
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Depends, Query
 
 from app.models.schemas import Alert, AnomalyRecord
-from app.services.anomaly_service import build_alerts, load_anomalies
+from app.db.mongodb import get_db
+from app.services.anomaly_service import build_alerts, get_alerts_from_db, load_anomalies
 
 router = APIRouter(prefix="/anomalies", tags=["anomalies"])
+router_api = APIRouter(prefix="/api", tags=["anomalies"])
 
 
 @router.get("", response_model=list[AnomalyRecord])
@@ -16,3 +18,11 @@ async def get_anomalies(limit: int = Query(100, ge=1, le=1000)) -> list[AnomalyR
 @router.get("/alerts", response_model=list[Alert])
 async def get_alerts(limit: int = Query(100, ge=1, le=1000)) -> list[Alert]:
     return build_alerts(limit)
+
+
+@router_api.get("/anomalies", response_model=list[Alert])
+async def api_alerts(
+    limit: int = Query(100, ge=1, le=1000),
+    db=Depends(get_db),
+) -> list[Alert]:
+    return await get_alerts_from_db(db, limit)

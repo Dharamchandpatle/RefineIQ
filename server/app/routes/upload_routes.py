@@ -4,8 +4,6 @@ from pathlib import Path
 
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
 from motor.motor_asyncio import AsyncIOMotorDatabase
-from anyio import to_thread
-
 from app.db.mongodb import get_db
 from app.services.auth_service import require_admin
 from app.services.pipeline_service import run_pipeline, save_uploaded_file
@@ -32,7 +30,7 @@ async def upload_dataset(
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to save file") from exc
 
     try:
-        await to_thread.run_sync(run_pipeline, Path(saved_path), db)
+        await run_pipeline(Path(saved_path), db)
     except ValueError as exc:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
     except Exception as exc:

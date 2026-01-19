@@ -6,6 +6,8 @@ from typing import Any
 
 import pandas as pd
 
+from anyio import to_thread
+
 from app.config import settings
 
 UPLOAD_DIR = Path(settings.data_dir) / "uploads"
@@ -168,7 +170,7 @@ def save_uploaded_file(file_bytes: bytes, filename: str) -> Path:
     return target
 
 
-def run_pipeline(file_path: Path, db) -> None:
+def _execute_pipeline(file_path: Path) -> dict[str, Any]:
     df = pd.read_csv(file_path)
     if df.empty:
         raise ValueError("Uploaded CSV is empty")
@@ -186,21 +188,32 @@ def run_pipeline(file_path: Path, db) -> None:
         "sec": _forecast_summary_from_df(df, "sec"),
     }
 
+    return {
+        "kpi_snapshot": kpi_snapshot,
+        "anomalies": anomalies,
+        "recommendations": recommendations,
+        "forecasts": forecasts,
+    }
+
+
+async def run_pipeline(file_path: Path, db) -> None:
+    results = await to_thread.run_sync(_execute_pipeline, file_path)
     if db is None:
         return
 
-    db.kpi_snapshots.insert_one(kpi_snapshot)
+    await db.kpi_snapshots.insert_one(results["kpi_snapshot"])
 
-    if anomalies:
-        db.anomaly_alerts.delete_many({})
-        db.anomaly_alerts.insert_many(anomalies)
+    if results["anomalies"]:
+        await db.anomaly_alerts.delete_many({})
+        await db.anomaly_alerts.insert_many(results["anomalies"])
 
-    if recommendations:
-        db.recommendations.delete_many({})
-        db.recommendations.insert_many(recommendations)
+    if results["recommendations"]:
+        await db.recommendations.delete_many({})
+        await db.recommendations.insert_many(results["recommendations"])
 
-    db.forecast_summaries.delete_many({})
+    await db.forecast_summary.delete_many({})
+    forecasts = results["forecasts"]
     if isinstance(forecasts, dict):
-        db.forecast_summaries.insert_many(list(forecasts.values()))
+        await db.forecast_summary.insert_many(list(forecasts.values()))
     elif isinstance(forecasts, list):
-        db.forecast_summaries.insert_many(forecasts)
+        await db.forecast_summary.insert_many(forecasts)

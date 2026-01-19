@@ -20,6 +20,8 @@ const OperatorDashboard = () => {
   const [summary, setSummary] = useState({ avg_sec: 0 });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [unitFilter, setUnitFilter] = useState("all");
+  const [dateFilter, setDateFilter] = useState("all");
 
   useEffect(() => {
     const loadData = async () => {
@@ -62,6 +64,54 @@ const OperatorDashboard = () => {
     return `${energyTrend[energyTrend.length - 1].value.toFixed(2)}`;
   }, [energyTrend]);
 
+  const deriveUnit = (source?: string | null) => {
+    if (!source) return "Unknown";
+    return source;
+  };
+
+  const unitOptions = useMemo(() => {
+    const values = new Set<string>();
+    alerts.forEach((alert) => values.add(deriveUnit(alert.source)));
+    return ["all", ...Array.from(values).filter((value) => value !== "Unknown")];
+  }, [alerts]);
+
+  const filteredAlerts = useMemo(() => {
+    const now = new Date();
+    const getStartDate = () => {
+      if (dateFilter === "today") {
+        const start = new Date(now);
+        start.setHours(0, 0, 0, 0);
+        return start;
+      }
+      if (dateFilter === "week") {
+        return new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+      }
+      if (dateFilter === "month") {
+        return new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+      }
+      if (dateFilter === "year") {
+        return new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000);
+      }
+      return null;
+    };
+
+    const startDate = getStartDate();
+
+    return alerts
+      .map((alert) => ({
+        ...alert,
+        unit: deriveUnit(alert.source),
+      }))
+      .filter((alert) => {
+        if (unitFilter !== "all" && alert.unit !== unitFilter) return false;
+        if (!startDate) return true;
+        if (!alert.timestamp) return true;
+        const alertDate = new Date(alert.timestamp);
+        if (Number.isNaN(alertDate.getTime())) return true;
+        return alertDate >= startDate;
+      });
+  }, [alerts, unitFilter, dateFilter]);
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[320px]">
@@ -91,7 +141,38 @@ const OperatorDashboard = () => {
         <RecommendationPanel recommendations={recommendations.slice(0, 4)} title="Recommendations" />
       </div>
 
-      <AlertTable alerts={alerts} />
+      <div className="rounded-2xl border border-blue-100 bg-white/70 backdrop-blur-sm shadow-sm p-5 space-y-4">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+          <div>
+            <h3 className="text-sm font-semibold text-brand-blue">Live Anomaly Alerts</h3>
+            <p className="text-xs text-slate-500">Filter by unit and time window.</p>
+          </div>
+          <div className="flex flex-wrap gap-3">
+            <select
+              value={unitFilter}
+              onChange={(event) => setUnitFilter(event.target.value)}
+              className="text-xs border border-blue-100 rounded-md px-3 py-2 bg-white/80 backdrop-blur-sm"
+            >
+              <option value="all">All Units</option>
+              {unitOptions.filter((option) => option !== "all").map((unit) => (
+                <option key={unit} value={unit}>{unit}</option>
+              ))}
+            </select>
+            <select
+              value={dateFilter}
+              onChange={(event) => setDateFilter(event.target.value)}
+              className="text-xs border border-blue-100 rounded-md px-3 py-2 bg-white/80 backdrop-blur-sm"
+            >
+              <option value="all">All Time</option>
+              <option value="today">Today</option>
+              <option value="week">This Week</option>
+              <option value="month">This Month</option>
+              <option value="year">This Year</option>
+            </select>
+          </div>
+        </div>
+        <AlertTable alerts={filteredAlerts} />
+      </div>
     </div>
   );
 };

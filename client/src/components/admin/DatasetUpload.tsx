@@ -45,11 +45,8 @@ const DatasetUpload = ({ onSuccess }: DatasetUploadProps) => {
       setStatus("uploading");
       setMessage("Uploading dataset...");
       await uploadDataset(file);
-      setStatus("processing");
-      setMessage("Processing AI analysis...");
-      await new Promise((resolve) => setTimeout(resolve, 1200));
       setStatus("success");
-      setMessage("Dataset processed successfully");
+      setMessage("Dataset processed successfully.");
       if (onSuccess) {
         await onSuccess();
       }
@@ -63,7 +60,7 @@ const DatasetUpload = ({ onSuccess }: DatasetUploadProps) => {
   const isBusy = status === "uploading" || status === "processing";
 
   return (
-    <div className="border border-slate-200 rounded-lg p-6 bg-white shadow-sm space-y-4">
+    <div className="rounded-2xl border border-blue-100 bg-white/70 backdrop-blur-sm shadow-sm p-6 space-y-4">
       <div>
         <h3 className="text-xl font-semibold text-brand-blue">Upload Refinery Dataset</h3>
         <p className="text-sm text-slate-500">
@@ -76,7 +73,7 @@ const DatasetUpload = ({ onSuccess }: DatasetUploadProps) => {
           type="file"
           accept=".csv"
           onChange={handleFileChange}
-          className="w-full md:flex-1 border border-slate-200 rounded-md px-3 py-2 text-sm bg-white"
+          className="w-full md:flex-1 border border-blue-100 rounded-md px-3 py-2 text-sm bg-white/80 backdrop-blur-sm"
         />
         <Button
           variant="primary"

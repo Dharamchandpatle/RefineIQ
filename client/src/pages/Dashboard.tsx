@@ -8,26 +8,18 @@ import AlertsPanel from "@/components/dashboard/AlertsPanel";
 import EnergyChart from "@/components/dashboard/EnergyChart";
 import KPICard from "@/components/dashboard/KPICard";
 import RecommendationsPanel from "@/components/dashboard/RecommendationsPanel";
-import UnitStatusGrid from "@/components/dashboard/UnitStatusGrid";
 import Sidebar from "@/components/layout/Sidebar";
 import BackgroundComponent from "@/components/ui/background-components";
 import {
-    type Alert,
-    type KPIData,
-    type Recommendation,
-    type RefineryUnit,
-} from "@/data/mockData";
-import {
-    alertsApi,
-    energyApi,
+    anomaliesApi,
+    forecastsApi,
     kpiApi,
     recommendationsApi,
-    unitsApi,
+    type AlertRecord,
+    type RecommendationRecord,
 } from "@/services/api";
 import { motion } from "framer-motion";
 import {
-    Clock,
-    DollarSign,
     Factory,
     Gauge,
     Leaf,
@@ -36,50 +28,85 @@ import {
 import { useEffect, useState } from "react";
 
 const kpiIcons = {
-  "Overall SEC": Zap,
-  "Plant Efficiency": Gauge,
-  "Total Production": Factory,
-  "Energy Cost": DollarSign,
-  "CO2 Emissions": Leaf,
-  Uptime: Clock,
+  "Average SEC": Zap,
+  "Average Energy": Gauge,
+  "Total Energy": Factory,
+  "Anomaly Rate": Leaf,
 };
 
 const kpiColors = {
-  "Overall SEC": "primary" as const,
-  "Plant Efficiency": "secondary" as const,
-  "Total Production": "accent" as const,
-  "Energy Cost": "warning" as const,
-  "CO2 Emissions": "success" as const,
-  Uptime: "primary" as const,
+  "Average SEC": "primary" as const,
+  "Average Energy": "secondary" as const,
+  "Total Energy": "accent" as const,
+  "Anomaly Rate": "warning" as const,
+};
+
+type DashboardKpi = {
+  name: keyof typeof kpiIcons;
+  value: number;
+  unit: string;
+  trend: "up" | "down" | "stable";
+  changePercent: number;
 };
 
 const Dashboard = () => {
-  const [kpis, setKpis] = useState<KPIData[]>([]);
+  const [kpis, setKpis] = useState<DashboardKpi[]>([]);
   const [energyData, setEnergyData] = useState<
-    { date: string; totalEnergy: number; totalProduction: number }[]
+    { date: string; totalEnergy: number; totalProduction?: number | null }[]
   >([]);
-  const [alerts, setAlerts] = useState<Alert[]>([]);
-  const [units, setUnits] = useState<RefineryUnit[]>([]);
-  const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
+  const [alerts, setAlerts] = useState<AlertRecord[]>([]);
+  const [recommendations, setRecommendations] = useState<RecommendationRecord[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [kpiData, energy, alertData, unitData, recData] =
-          await Promise.all([
-            kpiApi.getAll(),
-            energyApi.getDailyTotals(),
-            alertsApi.getAll(),
-            unitsApi.getAll(),
-            recommendationsApi.getAll(),
-          ]);
+        const [kpiSummary, forecastData, alertData, recData] = await Promise.all([
+          kpiApi.getSummary(),
+          forecastsApi.getForecast("energy", 30),
+          anomaliesApi.getAlerts(100),
+          recommendationsApi.getAll(20),
+        ]);
 
-        setKpis(kpiData);
-        setEnergyData(energy);
-        setAlerts(alertData);
-        setUnits(unitData);
-        setRecommendations(recData);
+        setKpis([
+          {
+            name: "Average SEC",
+            value: kpiSummary.avg_sec || 0,
+            unit: "MWh/bbl",
+            trend: "stable",
+            changePercent: 0,
+          },
+          {
+            name: "Average Energy",
+            value: kpiSummary.avg_energy || 0,
+            unit: "MWh",
+            trend: "stable",
+            changePercent: 0,
+          },
+          {
+            name: "Total Energy",
+            value: kpiSummary.total_energy || 0,
+            unit: "MWh",
+            trend: "stable",
+            changePercent: 0,
+          },
+          {
+            name: "Anomaly Rate",
+            value: kpiSummary.anomaly_rate ? kpiSummary.anomaly_rate * 100 : 0,
+            unit: "%",
+            trend: "stable",
+            changePercent: 0,
+          },
+        ]);
+
+        setEnergyData(
+          (forecastData || []).map((item, index) => ({
+            date: item.timestamp || `T${index + 1}`,
+            totalEnergy: item.value || 0,
+          }))
+        );
+        setAlerts(alertData || []);
+        setRecommendations(recData || []);
       } catch (error) {
         console.error("Failed to fetch dashboard data:", error);
       } finally {
@@ -89,13 +116,6 @@ const Dashboard = () => {
 
     fetchData();
   }, []);
-
-  const handleAcknowledgeAlert = async (alertId: string) => {
-    await alertsApi.acknowledge(alertId);
-    setAlerts((prev) =>
-      prev.map((a) => (a.id === alertId ? { ...a, acknowledged: true } : a))
-    );
-  };
 
   if (isLoading) {
     return (
@@ -158,22 +178,14 @@ const Dashboard = () => {
 
           {/* Alerts Panel */}
           <div className="lg:col-span-1">
-            <AlertsPanel
-              alerts={alerts}
-              onAcknowledge={handleAcknowledgeAlert}
-            />
+            <AlertsPanel alerts={alerts} />
           </div>
         </div>
 
         {/* Bottom grid */}
         <div className="grid lg:grid-cols-3 gap-6">
-          {/* Unit Status Grid - spans 2 columns */}
-          <div className="lg:col-span-2">
-            <UnitStatusGrid units={units} />
-          </div>
-
           {/* Recommendations Panel */}
-          <div className="lg:col-span-1">
+          <div className="lg:col-span-1 lg:col-start-3">
             <RecommendationsPanel recommendations={recommendations} />
           </div>
         </div>

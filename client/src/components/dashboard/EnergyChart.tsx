@@ -19,7 +19,7 @@ import {
 interface ChartDataPoint {
   date: string;
   totalEnergy: number;
-  totalProduction: number;
+  totalProduction?: number | null;
 }
 
 interface EnergyChartProps {
@@ -54,6 +54,8 @@ export const EnergyChart = ({
   data,
   title = "Energy Consumption Trend",
 }: EnergyChartProps) => {
+  const hasProduction = data.some((item) => item.totalProduction !== undefined && item.totalProduction !== null);
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -126,15 +128,17 @@ export const EnergyChart = ({
               fillOpacity={1}
               fill="url(#energyGradient)"
             />
-            <Area
-              type="monotone"
-              dataKey="totalProduction"
-              name="Production"
-              stroke="hsl(186 100% 50%)"
-              strokeWidth={2}
-              fillOpacity={1}
-              fill="url(#productionGradient)"
-            />
+            {hasProduction && (
+              <Area
+                type="monotone"
+                dataKey="totalProduction"
+                name="Production"
+                stroke="hsl(186 100% 50%)"
+                strokeWidth={2}
+                fillOpacity={1}
+                fill="url(#productionGradient)"
+              />
+            )}
           </AreaChart>
         </ResponsiveContainer>
       </div>

@@ -2,7 +2,6 @@ import AppShell from "@/components/layout/AppShell";
 import { ThemeProvider } from "@/components/ui/theme-provider";
 import { AuthContext, useAuthState } from "@/hooks/useAuth";
 import AdminDashboard from "@/pages/AdminDashboard";
-import Home from "@/pages/Home";
 import HomePage from "@/pages/HomePage";
 import Login from "@/pages/Login";
 import OperatorDashboard from "@/pages/OperatorDashboard";
@@ -47,7 +46,6 @@ const AppRoutes = () => {
       <Routes>
         <Route element={<AppShell />}>
           <Route index element={<HomePage />} />
-          <Route path="/home-old" element={<Home />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/dashboard" element={<RoleRedirect />} />
@@ -67,10 +65,26 @@ const AppRoutes = () => {
               </ProtectedRoute>
             }
           />
-          <Route
+          {/* <Route
             path="/profile"
             element={
               <ProtectedRoute>
+                <Profile />
+              </ProtectedRoute>
+            }
+          /> */}
+          <Route
+            path="/dashboard/admin/profile"
+            element={
+              <ProtectedRoute role="ADMIN">
+                <Profile />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/dashboard/operator/profile"
+            element={
+              <ProtectedRoute role="OPERATOR">
                 <Profile />
               </ProtectedRoute>
             }

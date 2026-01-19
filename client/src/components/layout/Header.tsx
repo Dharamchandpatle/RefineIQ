@@ -16,33 +16,33 @@ export const Header = () => {
       initial={{ y: -100, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       transition={{ duration: 0.6 }}
-      className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60"
+      className="sticky top-0 z-50 w-full border-b border-blue-200 bg-white/90 backdrop-blur supports-[backdrop-filter]:bg-white/80"
     >
       <div className="container flex h-16 items-center justify-between px-4 md:px-8">
         {/* Logo */}
         <Link to="/" className="flex items-center gap-3 group">
-          {/* IOCL Logo */}
           <img
-            src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRFPC-soVqmkNILA6QUDqpv9ZRMbkunkW6TRw&s"
-            alt="IOCL Logo"
-            className="w-10 h-10 object-contain transition-transform group-hover:scale-110"
+            src="/images/Indian_Oil_Logo.svg.png"
+            alt="Indian Oil Corporation Limited"
+            className="h-10 w-auto object-contain"
           />
-          <span className="font-orbitron font-bold text-lg hidden sm:inline-block">
-            RefineIQ
-          </span>
+          <div className="hidden sm:flex flex-col leading-tight">
+            <span className="text-xs text-slate-500">Indian Oil Corporation Limited</span>
+            <span className="font-orbitron font-bold text-lg text-[#003A8F]">RefineryIQ</span>
+          </div>
         </Link>
 
         {/* Navigation Links */}
         <nav className="hidden md:flex items-center gap-6">
           <Link
             to="/"
-            className="text-sm font-medium transition-colors hover:text-primary"
+            className="text-sm font-medium transition-colors hover:text-[#F37021]"
           >
             Home
           </Link>
           <a
             href="#features"
-            className="text-sm font-medium transition-colors hover:text-primary"
+            className="text-sm font-medium transition-colors hover:text-[#F37021]"
           >
             Features
           </a>

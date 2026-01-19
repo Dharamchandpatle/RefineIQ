@@ -29,15 +29,15 @@ export const FeatureCard = ({
       whileHover={{ scale: 1.05, y: -5 }}
       className="h-full"
     >
-      <Card className="glass-card h-full hover:border-primary/50 transition-all duration-300 group">
+      <Card className="h-full rounded-2xl border border-slate-200 bg-white shadow-sm transition-all duration-300 group hover:border-[#003A8F]/40 hover:shadow-md">
         <CardHeader>
-          <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4 group-hover:bg-primary/20 transition-colors">
-            <Icon className="w-6 h-6 text-primary" />
+          <div className="w-12 h-12 rounded-xl bg-[#003A8F]/10 flex items-center justify-center mb-4 group-hover:bg-[#F37021]/15 transition-colors">
+            <Icon className="w-6 h-6 text-brand-blue" />
           </div>
-          <CardTitle className="text-xl">{title}</CardTitle>
+          <CardTitle className="text-lg text-slate-900">{title}</CardTitle>
         </CardHeader>
         <CardContent>
-          <CardDescription className="text-base">
+          <CardDescription className="text-sm text-slate-600">
             {description}
           </CardDescription>
         </CardContent>

@@ -3,26 +3,32 @@
  * Displays real-time alerts with severity indicators
  */
 
-import { Button } from "@/components/ui/button";
-import { Alert } from "@/data/mockData";
 import { cn } from "@/lib/utils";
+import { type AlertRecord } from "@/services/api";
 import { AnimatePresence, motion } from "framer-motion";
 import {
-    AlertCircle,
-    AlertTriangle,
-    CheckCircle,
-    Clock,
-    Info,
+  AlertCircle,
+  AlertTriangle,
+  Clock,
+  Info,
 } from "lucide-react";
 
 interface AlertsPanelProps {
-  alerts: Alert[];
-  onAcknowledge?: (alertId: string) => void;
+  alerts: AlertRecord[];
 }
 
-export const AlertsPanel = ({ alerts, onAcknowledge }: AlertsPanelProps) => {
-  const getAlertIcon = (type: Alert["type"]) => {
-    switch (type) {
+export const AlertsPanel = ({ alerts }: AlertsPanelProps) => {
+  const normalizeSeverity = (severity?: string) => {
+    const normalized = severity?.toLowerCase();
+    if (normalized === "critical") return "critical";
+    if (normalized === "high") return "warning";
+    if (normalized === "medium") return "warning";
+    if (normalized === "low") return "info";
+    return "info";
+  };
+
+  const getAlertIcon = (severity?: string) => {
+    switch (normalizeSeverity(severity)) {
       case "critical":
         return AlertCircle;
       case "warning":
@@ -34,8 +40,8 @@ export const AlertsPanel = ({ alerts, onAcknowledge }: AlertsPanelProps) => {
     }
   };
 
-  const getAlertStyles = (type: Alert["type"]) => {
-    switch (type) {
+  const getAlertStyles = (severity?: string) => {
+    switch (normalizeSeverity(severity)) {
       case "critical":
         return {
           bg: "bg-destructive/10 border-destructive/30",
@@ -49,15 +55,10 @@ export const AlertsPanel = ({ alerts, onAcknowledge }: AlertsPanelProps) => {
           glow: "shadow-[0_0_15px_hsl(38_92%_50%/0.3)]",
         };
       case "info":
+      default:
         return {
           bg: "bg-secondary/10 border-secondary/30",
           icon: "text-secondary",
-          glow: "",
-        };
-      default:
-        return {
-          bg: "bg-muted",
-          icon: "text-muted-foreground",
           glow: "",
         };
     }
@@ -79,11 +80,13 @@ export const AlertsPanel = ({ alerts, onAcknowledge }: AlertsPanelProps) => {
   };
 
   const sortedAlerts = [...alerts].sort((a, b) => {
-    const priority = { critical: 0, warning: 1, info: 2 };
-    if (priority[a.type] !== priority[b.type]) {
-      return priority[a.type] - priority[b.type];
+    const priority = { critical: 0, warning: 1, info: 2 } as const;
+    const aType = normalizeSeverity(a.severity);
+    const bType = normalizeSeverity(b.severity);
+    if (priority[aType] !== priority[bType]) {
+      return priority[aType] - priority[bType];
     }
-    return new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime();
+    return new Date(b.timestamp || 0).getTime() - new Date(a.timestamp || 0).getTime();
   });
 
   return (
@@ -102,13 +105,13 @@ export const AlertsPanel = ({ alerts, onAcknowledge }: AlertsPanelProps) => {
           <div>
             <h3 className="font-orbitron font-bold text-lg text-[#0F172A]">Active Alerts</h3>
             <p className="text-sm text-[#64748B]">
-              {alerts.filter((a) => !a.acknowledged).length} unacknowledged
+              {alerts.length} total alerts
             </p>
           </div>
         </div>
 
         {/* Pulsing indicator for critical alerts */}
-        {alerts.some((a) => a.type === "critical" && !a.acknowledged) && (
+        {alerts.some((a) => normalizeSeverity(a.severity) === "critical") && (
           <motion.div
             animate={{ scale: [1, 1.2, 1] }}
             transition={{ duration: 1, repeat: Infinity }}
@@ -120,8 +123,8 @@ export const AlertsPanel = ({ alerts, onAcknowledge }: AlertsPanelProps) => {
       <div className="space-y-3 max-h-[400px] overflow-y-auto pr-2">
         <AnimatePresence>
           {sortedAlerts.map((alert, index) => {
-            const Icon = getAlertIcon(alert.type);
-            const styles = getAlertStyles(alert.type);
+            const Icon = getAlertIcon(alert.severity);
+            const styles = getAlertStyles(alert.severity);
 
             return (
               <motion.div
@@ -133,8 +136,7 @@ export const AlertsPanel = ({ alerts, onAcknowledge }: AlertsPanelProps) => {
                 className={cn(
                   "relative p-4 rounded-lg border transition-all",
                   styles.bg,
-                  !alert.acknowledged && styles.glow,
-                  alert.acknowledged && "opacity-60"
+                  styles.glow
                 )}
               >
                 <div className="flex items-start gap-3">
@@ -145,36 +147,21 @@ export const AlertsPanel = ({ alerts, onAcknowledge }: AlertsPanelProps) => {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
                       <span className="font-medium text-sm uppercase tracking-wide">
-                        {alert.unitId}
+                        {alert.source || "SYSTEM"}
                       </span>
                       <span className="text-xs text-muted-foreground flex items-center gap-1">
                         <Clock className="w-3 h-3" />
-                        {formatTime(alert.timestamp)}
+                        {alert.timestamp ? formatTime(alert.timestamp) : "-"}
                       </span>
                     </div>
                     <p className="text-sm text-foreground/90">
                       {alert.message}
                     </p>
                   </div>
-
-                  {!alert.acknowledged && onAcknowledge && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => onAcknowledge(alert.id)}
-                      className="h-8 px-2 text-muted-foreground hover:text-success"
-                    >
-                      <CheckCircle className="w-4 h-4" />
-                    </Button>
-                  )}
-
-                  {alert.acknowledged && (
-                    <CheckCircle className="w-4 h-4 text-success" />
-                  )}
                 </div>
 
                 {/* Critical alert animation */}
-                {alert.type === "critical" && !alert.acknowledged && (
+                {normalizeSeverity(alert.severity) === "critical" && (
                   <motion.div
                     className="absolute inset-0 rounded-lg border-2 border-destructive pointer-events-none"
                     animate={{ opacity: [0.5, 0, 0.5] }}

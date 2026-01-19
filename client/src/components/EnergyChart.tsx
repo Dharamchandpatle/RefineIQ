@@ -1,6 +1,7 @@
 import {
-    Line,
-    LineChart,
+    Area,
+    AreaChart,
+    CartesianGrid,
     ResponsiveContainer,
     Tooltip,
     XAxis,
@@ -14,16 +15,23 @@ interface EnergyChartProps {
 }
 
 const EnergyChart = ({ title, data, color = "#003A8F" }: EnergyChartProps) => (
-  <div className="border border-slate-200 dark:border-slate-800 rounded-lg p-4 bg-white dark:bg-slate-900 shadow-sm">
+  <div className="rounded-2xl border border-slate-200 bg-white shadow-sm p-5">
     <h3 className="text-sm font-semibold text-brand-blue mb-4">{title}</h3>
     <div className="h-64">
       <ResponsiveContainer width="100%" height="100%">
-        <LineChart data={data}>
+        <AreaChart data={data}>
+          <defs>
+            <linearGradient id="energyFill" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="5%" stopColor={color} stopOpacity={0.35} />
+              <stop offset="95%" stopColor={color} stopOpacity={0.05} />
+            </linearGradient>
+          </defs>
+          <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
           <XAxis dataKey="label" tick={{ fontSize: 11 }} stroke="#94a3b8" />
           <YAxis tick={{ fontSize: 11 }} stroke="#94a3b8" />
-          <Tooltip />
-          <Line type="monotone" dataKey="value" stroke={color} strokeWidth={2} dot={false} />
-        </LineChart>
+          <Tooltip contentStyle={{ borderRadius: 8, borderColor: "#e2e8f0" }} />
+          <Area type="monotone" dataKey="value" stroke={color} strokeWidth={2} fill="url(#energyFill)" />
+        </AreaChart>
       </ResponsiveContainer>
     </div>
   </div>

@@ -31,3 +31,26 @@ def load_recommendations(limit: int) -> list[dict]:
         )
 
     return records
+
+
+async def get_recommendations_from_db(db, limit: int) -> list[dict]:
+    if db is None:
+        return load_recommendations(limit)
+
+    cursor = db.recommendations.find().sort("timestamp", -1).limit(limit)
+    recommendations = []
+    async for item in cursor:
+        recommendations.append(
+            {
+                "id": str(item.get("_id")),
+                "title": item.get("title"),
+                "description": item.get("description"),
+                "impact": item.get("impact"),
+                "timestamp": item.get("timestamp"),
+            }
+        )
+
+    if not recommendations:
+        return load_recommendations(limit)
+
+    return recommendations

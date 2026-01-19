@@ -79,3 +79,26 @@ def build_alerts(limit: int) -> list[dict]:
         )
 
     return alerts
+
+
+async def get_alerts_from_db(db, limit: int) -> list[dict]:
+    if db is None:
+        return build_alerts(limit)
+
+    cursor = db.anomaly_alerts.find().sort("timestamp", -1).limit(limit)
+    alerts = []
+    async for item in cursor:
+        alerts.append(
+            {
+                "id": str(item.get("_id")),
+                "message": item.get("message"),
+                "severity": item.get("severity"),
+                "timestamp": item.get("timestamp"),
+                "source": item.get("source"),
+            }
+        )
+
+    if not alerts:
+        return build_alerts(limit)
+
+    return alerts

@@ -7,10 +7,16 @@ from app.models.schemas import KPISnapshot, KPISummary
 from app.services.kpi_service import get_latest_snapshot, list_snapshots
 
 router = APIRouter(prefix="/kpis", tags=["kpis"])
+router_api = APIRouter(prefix="/api", tags=["kpis"])
 
 
 @router.get("/summary", response_model=KPISummary)
 async def kpi_summary(db=Depends(get_db)) -> KPISummary:
+    return await get_latest_snapshot(db)
+
+
+@router_api.get("/kpis", response_model=KPISummary)
+async def api_kpi_summary(db=Depends(get_db)) -> KPISummary:
     return await get_latest_snapshot(db)
 
 

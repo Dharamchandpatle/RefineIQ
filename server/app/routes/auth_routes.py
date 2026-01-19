@@ -78,10 +78,11 @@ async def register(
             detail="Email already registered",
         )
 
+    role_value = (user.role or "OPERATOR").upper()
     payload = {
         "email": user.email,
         "full_name": user.full_name,
-        "role": user.role,
+        "role": role_value,
         "hashed_password": _hash_password(user.password),
         "created_at": datetime.now(timezone.utc),
     }
@@ -92,7 +93,7 @@ async def register(
         id=str(result.inserted_id),
         email=user.email,
         full_name=user.full_name,
-        role=user.role,
+        role=role_value,
         created_at=payload["created_at"],
     )
 
@@ -123,4 +124,10 @@ async def login(
     return Token(
         access_token=token,
         expires_in=expires_in,
+        role=user.get("role") or "OPERATOR",
+        user={
+            "email": user.get("email"),
+            "name": user.get("full_name") or user.get("email", "").split("@")[0],
+            "role": user.get("role") or "OPERATOR",
+        },
     )

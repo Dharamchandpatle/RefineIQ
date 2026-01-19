@@ -3,7 +3,6 @@
  * Displays status cards for all refinery units
  */
 
-import { RefineryUnit } from "@/data/mockData";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
 import {
@@ -19,6 +18,16 @@ import { useNavigate } from "react-router-dom";
 
 interface UnitStatusGridProps {
   units: RefineryUnit[];
+}
+
+export interface RefineryUnit {
+  unitId: string;
+  name: string;
+  type: string;
+  status: "online" | "offline" | "maintenance" | "warning";
+  efficiency: number;
+  capacity: number;
+  currentLoad: number;
 }
 
 export const UnitStatusGrid = ({ units }: UnitStatusGridProps) => {

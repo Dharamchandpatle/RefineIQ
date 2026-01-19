@@ -3,53 +3,45 @@
  * AI-powered energy and production forecasts
  */
 
-import { useState, useEffect } from "react";
+import AIChatbot from "@/components/chatbot/AIChatbot";
+import Sidebar from "@/components/layout/Sidebar";
+import BackgroundComponent from "@/components/ui/background-components";
+import { cn } from "@/lib/utils";
+import { forecastsApi, type ForecastRecord } from "@/services/api";
 import { motion } from "framer-motion";
 import {
-  TrendingUp,
-  Calendar,
-  Zap,
-  Factory,
-  Target,
-  Brain,
-  ArrowUp,
-  ArrowDown,
+    Brain,
+    Calendar,
+    Target,
+    TrendingUp,
+    Zap,
 } from "lucide-react";
+import { useEffect, useState } from "react";
 import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  AreaChart,
-  Area,
+    Area,
+    AreaChart,
+    CartesianGrid,
+    ResponsiveContainer,
+    Tooltip,
+    XAxis,
+    YAxis
 } from "recharts";
-import BackgroundComponent from "@/components/ui/background-components";
-import Sidebar from "@/components/layout/Sidebar";
-import AIChatbot from "@/components/chatbot/AIChatbot";
-import { predictionsApi, energyApi } from "@/services/api";
-import { type Prediction } from "@/data/mockData";
-import { cn } from "@/lib/utils";
 
 const Predictions = () => {
-  const [predictions, setPredictions] = useState<Prediction[]>([]);
-  const [historicalData, setHistoricalData] = useState<
-    { date: string; totalEnergy: number; totalProduction: number }[]
-  >([]);
+  const [energyForecast, setEnergyForecast] = useState<ForecastRecord[]>([]);
+  const [secForecast, setSecForecast] = useState<ForecastRecord[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [predData, histData] = await Promise.all([
-          predictionsApi.getPredictions(),
-          energyApi.getDailyTotals(),
+        const [energyData, secData] = await Promise.all([
+          forecastsApi.getForecast("energy", 90),
+          forecastsApi.getForecast("sec", 90),
         ]);
 
-        setPredictions(predData);
-        setHistoricalData(histData.slice(-14)); // Last 14 days
+        setEnergyForecast(energyData || []);
+        setSecForecast(secData || []);
       } catch (error) {
         console.error("Failed to fetch predictions:", error);
       } finally {
@@ -60,42 +52,24 @@ const Predictions = () => {
     fetchData();
   }, []);
 
-  // Combine historical and prediction data for chart
-  const combinedData = [
-    ...historicalData.map((d) => ({
-      date: d.date,
-      energy: d.totalEnergy,
-      production: d.totalProduction,
-      type: "historical",
-    })),
-    ...predictions.map((p) => ({
-      date: p.date,
-      energy: p.predictedEnergy,
-      production: p.predictedProduction,
-      type: "predicted",
-      confidence: p.confidence,
-    })),
-  ];
+  const latestEnergy = energyForecast[energyForecast.length - 1]?.value ?? 0;
+  const latestSec = secForecast[secForecast.length - 1]?.value ?? 0;
 
-  const avgPredictedEnergy =
-    predictions.reduce((sum, p) => sum + p.predictedEnergy, 0) /
-    predictions.length;
-  const avgHistoricalEnergy =
-    historicalData.reduce((sum, d) => sum + d.totalEnergy, 0) /
-    historicalData.length;
-  const energyTrend = ((avgPredictedEnergy - avgHistoricalEnergy) / avgHistoricalEnergy) * 100;
+  const energySeries = energyForecast.map((item, index) => ({
+    date: item.timestamp || `T${index + 1}`,
+    energy: item.value ?? 0,
+  }));
 
-  const avgPredictedProduction =
-    predictions.reduce((sum, p) => sum + p.predictedProduction, 0) /
-    predictions.length;
-  const avgHistoricalProduction =
-    historicalData.reduce((sum, d) => sum + d.totalProduction, 0) /
-    historicalData.length;
-  const productionTrend =
-    ((avgPredictedProduction - avgHistoricalProduction) / avgHistoricalProduction) * 100;
+  const secSeries = secForecast.map((item, index) => ({
+    date: item.timestamp || `T${index + 1}`,
+    sec: item.value ?? 0,
+  }));
 
-  const avgConfidence =
-    predictions.reduce((sum, p) => sum + p.confidence, 0) / predictions.length;
+  const tableRows = energySeries.map((item, index) => ({
+    date: item.date,
+    energy: item.energy,
+    sec: secSeries[index]?.sec ?? 0,
+  }));
 
   if (isLoading) {
     return (
@@ -138,27 +112,25 @@ const Predictions = () => {
             </div>
           </motion.header>
 
-          {/* Prediction summary cards */}
+          {/* Forecast summary cards */}
           <div className="grid md:grid-cols-3 gap-4 mb-8">
             {[
               {
-                label: "Avg Predicted Energy",
-                value: `${(avgPredictedEnergy / 1000).toFixed(1)}k MWh`,
-                trend: energyTrend,
+                label: "Latest Energy Forecast",
+                value: `${(latestEnergy / 1000).toFixed(1)}k MWh`,
                 icon: Zap,
                 color: "primary",
               },
               {
-                label: "Avg Predicted Production",
-                value: `${(avgPredictedProduction / 1000).toFixed(0)}k bbl`,
-                trend: productionTrend,
-                icon: Factory,
+                label: "Latest SEC Forecast",
+                value: `${latestSec.toFixed(4)} MWh/bbl`,
+                icon: Target,
                 color: "secondary",
               },
               {
-                label: "Model Confidence",
-                value: `${(avgConfidence * 100).toFixed(1)}%`,
-                icon: Target,
+                label: "Forecast Points",
+                value: `${energyForecast.length}`,
+                icon: TrendingUp,
                 color: "accent",
               },
             ].map((item, index) => (
@@ -199,27 +171,12 @@ const Predictions = () => {
                   <span className="font-orbitron font-bold text-2xl">
                     {item.value}
                   </span>
-                  {item.trend !== undefined && (
-                    <div
-                      className={cn(
-                        "flex items-center gap-1 text-sm",
-                        item.trend > 0 ? "text-warning" : "text-success"
-                      )}
-                    >
-                      {item.trend > 0 ? (
-                        <ArrowUp className="w-4 h-4" />
-                      ) : (
-                        <ArrowDown className="w-4 h-4" />
-                      )}
-                      <span>{Math.abs(item.trend).toFixed(1)}%</span>
-                    </div>
-                  )}
                 </div>
               </motion.div>
             ))}
           </div>
 
-          {/* Combined chart */}
+          {/* Energy forecast chart */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -232,17 +189,17 @@ const Predictions = () => {
               </div>
               <div>
                 <h3 className="font-orbitron font-bold text-lg">
-                  Energy Forecast
+                  Energy Forecast (Backend)
                 </h3>
                 <p className="text-sm text-muted-foreground">
-                  Historical data + 7-day prediction
+                  Energy forecast from backend API
                 </p>
               </div>
             </div>
 
             <div className="h-[350px]">
               <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={combinedData}>
+                <AreaChart data={energySeries}>
                   <defs>
                     <linearGradient
                       id="energyHistGradient"
@@ -312,7 +269,7 @@ const Predictions = () => {
                     }}
                     formatter={(value: number, name: string) => [
                       `${value.toLocaleString()} MWh`,
-                      name === "energy" ? "Energy" : name,
+                      "Energy",
                     ]}
                   />
                     <Area
@@ -324,19 +281,6 @@ const Predictions = () => {
                     />
                 </AreaChart>
               </ResponsiveContainer>
-            </div>
-
-            <div className="flex items-center gap-6 mt-4 pt-4 border-t border-white/10">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-0.5 bg-primary rounded" />
-                <span className="text-sm text-muted-foreground">
-                  Historical
-                </span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-0.5 bg-primary rounded border-dashed border border-primary" />
-                <span className="text-sm text-muted-foreground">Predicted</span>
-              </div>
             </div>
           </motion.div>
 
@@ -353,10 +297,10 @@ const Predictions = () => {
               </div>
               <div>
                 <h3 className="font-orbitron font-bold text-lg">
-                  7-Day Forecast Details
+                  Forecast Details
                 </h3>
                 <p className="text-sm text-muted-foreground">
-                  Day-by-day predictions with confidence scores
+                  Day-by-day forecast values from backend
                 </p>
               </div>
             </div>
@@ -369,20 +313,17 @@ const Predictions = () => {
                       Date
                     </th>
                     <th className="text-right py-3 px-4 text-sm font-medium text-muted-foreground">
-                      Predicted Energy
+                      Energy Forecast
                     </th>
                     <th className="text-right py-3 px-4 text-sm font-medium text-muted-foreground">
-                      Predicted Production
-                    </th>
-                    <th className="text-right py-3 px-4 text-sm font-medium text-muted-foreground">
-                      Confidence
+                      SEC Forecast
                     </th>
                   </tr>
                 </thead>
                 <tbody>
-                  {predictions.map((prediction, index) => (
+                  {tableRows.map((row, index) => (
                     <motion.tr
-                      key={prediction.date}
+                      key={`${row.date}-${index}`}
                       initial={{ opacity: 0, x: -20 }}
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ delay: 0.4 + index * 0.05 }}
@@ -390,7 +331,7 @@ const Predictions = () => {
                     >
                       <td className="py-4 px-4">
                         <span className="font-medium">
-                          {new Date(prediction.date).toLocaleDateString(
+                          {new Date(row.date).toLocaleDateString(
                             "en-US",
                             {
                               weekday: "short",
@@ -402,37 +343,13 @@ const Predictions = () => {
                       </td>
                       <td className="py-4 px-4 text-right">
                         <span className="text-primary font-medium">
-                          {prediction.predictedEnergy.toLocaleString()} MWh
+                          {row.energy.toLocaleString()} MWh
                         </span>
                       </td>
                       <td className="py-4 px-4 text-right">
                         <span className="text-secondary font-medium">
-                          {prediction.predictedProduction.toLocaleString()} bbl
+                          {row.sec.toFixed(4)} MWh/bbl
                         </span>
-                      </td>
-                      <td className="py-4 px-4 text-right">
-                        <div className="flex items-center justify-end gap-2">
-                          <div className="w-16 h-2 bg-muted rounded-full overflow-hidden">
-                            <motion.div
-                              initial={{ width: 0 }}
-                              animate={{
-                                width: `${prediction.confidence * 100}%`,
-                              }}
-                              transition={{ duration: 0.5, delay: 0.5 + index * 0.05 }}
-                              className={cn(
-                                "h-full rounded-full",
-                                prediction.confidence >= 0.9
-                                  ? "bg-success"
-                                  : prediction.confidence >= 0.8
-                                    ? "bg-primary"
-                                    : "bg-warning"
-                              )}
-                            />
-                          </div>
-                          <span className="text-sm text-muted-foreground w-12 text-right">
-                            {(prediction.confidence * 100).toFixed(0)}%
-                          </span>
-                        </div>
                       </td>
                     </motion.tr>
                   ))}

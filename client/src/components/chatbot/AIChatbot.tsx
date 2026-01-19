@@ -96,7 +96,7 @@ export const AIChatbot = () => {
       const assistantMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: "assistant",
-        content: response.response,
+        content: response.reply,
         timestamp: new Date(),
       };
 
@@ -104,7 +104,7 @@ export const AIChatbot = () => {
       
       // Speak the response if audio is enabled
       if (audioEnabled) {
-        speakText(response.response);
+        speakText(response.reply);
       }
     } catch (error) {
       const errorMessage: Message = {
@@ -196,17 +196,17 @@ export const AIChatbot = () => {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.95 }}
             transition={{ duration: 0.2 }}
-            className="fixed bottom-24 right-6 z-50 w-[380px] h-[500px] glass-card border border-primary/20 flex flex-col overflow-hidden"
+            className="fixed bottom-24 right-6 z-50 w-[380px] h-[500px] rounded-2xl bg-white/75 backdrop-blur-md border border-blue-100 shadow-md flex flex-col overflow-hidden"
           >
             {/* Header */}
-            <div className="p-4 border-b border-white/10 bg-gradient-to-r from-primary/10 to-secondary/10">
+            <div className="p-4 border-b border-blue-100 bg-white/70 backdrop-blur-sm">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-primary to-secondary flex items-center justify-center">
-                  <Sparkles className="w-5 h-5 text-primary-foreground" />
+                <div className="w-10 h-10 rounded-lg bg-[#003A8F]/10 flex items-center justify-center">
+                  <Sparkles className="w-5 h-5 text-brand-blue" />
                 </div>
                 <div className="flex-1">
-                  <h3 className="font-orbitron font-bold">RefineryIQ Assistant</h3>
-                  <p className="text-xs text-muted-foreground">
+                  <h3 className="font-orbitron font-bold text-brand-blue">RefineIQ Assistant</h3>
+                  <p className="text-xs text-slate-500">
                     Powered by AI Intelligence
                   </p>
                 </div>
@@ -217,9 +217,9 @@ export const AIChatbot = () => {
                   onClick={toggleAudio}
                   className={cn(
                     "w-9 h-9 transition-colors",
-                    audioEnabled 
-                      ? "text-primary hover:text-primary/80 hover:bg-primary/10" 
-                      : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                    audioEnabled
+                      ? "text-brand-blue hover:text-brand-blue/80 hover:bg-[#003A8F]/10"
+                      : "text-slate-500 hover:text-slate-800 hover:bg-slate-100"
                   )}
                   title={audioEnabled ? "Audio On - Click to mute" : "Audio Off - Click to enable"}
                 >
@@ -248,22 +248,22 @@ export const AIChatbot = () => {
                     className={cn(
                       "w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0",
                       message.role === "user"
-                        ? "bg-primary/20"
-                        : "bg-secondary/20"
+                        ? "bg-[#F37021]/15"
+                        : "bg-[#003A8F]/10"
                     )}
                   >
                     {message.role === "user" ? (
-                      <User className="w-4 h-4 text-primary" />
+                      <User className="w-4 h-4 text-[#F37021]" />
                     ) : (
-                      <Bot className="w-4 h-4 text-secondary" />
+                      <Bot className="w-4 h-4 text-brand-blue" />
                     )}
                   </div>
                   <div
                     className={cn(
                       "max-w-[80%] p-3 rounded-lg text-sm",
                       message.role === "user"
-                        ? "bg-primary/20 text-foreground"
-                        : "bg-muted/50 text-foreground"
+                        ? "bg-[#F37021]/10 text-slate-800"
+                        : "bg-white/80 backdrop-blur-sm border border-blue-100 text-slate-800"
                     )}
                   >
                     {message.content}
@@ -277,11 +277,11 @@ export const AIChatbot = () => {
                   animate={{ opacity: 1 }}
                   className="flex gap-3"
                 >
-                  <div className="w-8 h-8 rounded-lg bg-secondary/20 flex items-center justify-center">
-                    <Bot className="w-4 h-4 text-secondary" />
+                  <div className="w-8 h-8 rounded-lg bg-[#003A8F]/10 flex items-center justify-center">
+                    <Bot className="w-4 h-4 text-brand-blue" />
                   </div>
-                  <div className="bg-muted/50 p-3 rounded-lg">
-                    <Loader2 className="w-4 h-4 animate-spin text-secondary" />
+                  <div className="bg-white/80 backdrop-blur-sm border border-blue-100 p-3 rounded-lg">
+                    <Loader2 className="w-4 h-4 animate-spin text-brand-blue" />
                   </div>
                 </motion.div>
               )}
@@ -291,8 +291,8 @@ export const AIChatbot = () => {
 
             {/* Suggested questions */}
             {messages.length <= 2 && (
-              <div className="px-4 py-2 border-t border-white/5">
-                <p className="text-xs text-muted-foreground mb-2">
+              <div className="px-4 py-2 border-t border-blue-100">
+                <p className="text-xs text-slate-500 mb-2">
                   Quick questions:
                 </p>
                 <div className="flex flex-wrap gap-2">
@@ -302,7 +302,7 @@ export const AIChatbot = () => {
                       onClick={() => {
                         setInput(question);
                       }}
-                      className="px-2 py-1 text-xs bg-muted/50 hover:bg-muted rounded border border-white/10 hover:border-primary/30 transition-colors"
+                      className="px-2 py-1 text-xs bg-white/70 backdrop-blur-sm rounded border border-blue-100 hover:border-[#003A8F]/40 transition-colors"
                     >
                       {question}
                     </button>
@@ -312,21 +312,21 @@ export const AIChatbot = () => {
             )}
 
             {/* Input */}
-            <div className="p-4 border-t border-white/10">
+            <div className="p-4 border-t border-blue-100">
               <div className="flex gap-2">
                 <Input
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   onKeyPress={handleKeyPress}
                   placeholder="Ask about energy, alerts, predictions..."
-                  className="flex-1 bg-muted/50 border-white/10 focus:border-primary/50"
+                  className="flex-1 bg-white/80 backdrop-blur-sm border-blue-100 focus:border-[#003A8F]/50"
                   disabled={isLoading}
                 />
                 <Button
                   onClick={handleSend}
                   disabled={!input.trim() || isLoading}
                   size="icon"
-                  className="bg-gradient-to-br from-primary to-secondary hover:from-primary/90 hover:to-secondary/90"
+                  className="bg-brand-orange hover:bg-brand-orange/90 text-white"
                 >
                   <Send className="w-4 h-4" />
                 </Button>

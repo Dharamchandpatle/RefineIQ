@@ -18,6 +18,7 @@ class Settings(BaseSettings):
     jwt_expire_minutes: int = 60
     client_url: str = "http://localhost:5173"
     gemini_api_key: str | None = None
+    gemini_model: str = "gemini-1.5-flash"
     data_dir: str = str(DEFAULT_DATA_DIR)
 
     model_config = SettingsConfigDict(

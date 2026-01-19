@@ -6,16 +6,16 @@ const UserOverview = () => {
   ];
 
   return (
-    <div className="border border-slate-200 dark:border-slate-800 rounded-lg p-4 bg-white dark:bg-slate-900 shadow-sm">
+    <div className="rounded-2xl border border-slate-200 bg-white shadow-sm p-5">
       <h3 className="text-sm font-semibold text-brand-blue mb-4">User Overview</h3>
       <div className="space-y-3">
         {users.map((user) => (
           <div key={user.email} className="flex items-center justify-between text-sm">
             <div>
-              <p className="font-medium text-slate-800 dark:text-slate-100">{user.name}</p>
+              <p className="font-medium text-slate-800">{user.name}</p>
               <p className="text-xs text-slate-500">{user.email}</p>
             </div>
-            <span className="text-xs px-2 py-1 rounded-full border border-slate-200 dark:border-slate-700 text-brand-blue">
+            <span className="text-xs px-2.5 py-1 rounded-full border border-slate-200 text-brand-blue">
               {user.role}
             </span>
           </div>
