@@ -42,7 +42,7 @@ const Navbar = () => {
 
           {isAuthenticated ? (
             <Link
-              to="/profile"
+              to={user?.role === "ADMIN" ? "/dashboard/admin/profile" : "/dashboard/operator/profile"}
               className="w-9 h-9 rounded-full border border-blue-100 bg-white/70 backdrop-blur-sm flex items-center justify-center text-sm font-semibold text-brand-blue"
               aria-label="Profile"
             >

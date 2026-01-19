@@ -131,3 +131,25 @@ async def login(
             "role": user.get("role") or "OPERATOR",
         },
     )
+
+
+# ---------------------------------
+# Users (Admin Overview)
+# ---------------------------------
+@router.get("/users", response_model=list[UserOut])
+async def list_users(
+    db: AsyncIOMotorDatabase = Depends(get_db),
+) -> list[UserOut]:
+    users: list[UserOut] = []
+    cursor = db.users.find({}, {"hashed_password": 0}).sort("created_at", -1)
+    async for user in cursor:
+        users.append(
+            UserOut(
+                id=str(user.get("_id")),
+                email=user.get("email"),
+                full_name=user.get("full_name"),
+                role=user.get("role") or "OPERATOR",
+                created_at=user.get("created_at") or datetime.now(timezone.utc),
+            )
+        )
+    return users

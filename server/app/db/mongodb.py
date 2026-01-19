@@ -12,6 +12,7 @@ async def connect_to_mongo() -> None:
     global client, _db
     client = AsyncIOMotorClient(settings.mongo_uri)
     _db = client[settings.mongo_db]
+    await client.admin.command("ping")
 
 
 async def close_mongo_connection() -> None:
@@ -20,4 +21,6 @@ async def close_mongo_connection() -> None:
 
 
 def get_db():
+    if _db is None:
+        raise RuntimeError("MongoDB connection is not initialized")
     return _db

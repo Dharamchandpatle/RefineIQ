@@ -31,6 +31,14 @@ export interface RecommendationRecord {
   timestamp?: string | null;
 }
 
+export interface UserRecord {
+  id?: string | null;
+  email: string;
+  full_name?: string | null;
+  role?: UserRole;
+  created_at?: string | null;
+}
+
 const TOKEN_KEY = "refineryiq_token";
 const ROLE_KEY = "refineryiq_role";
 const USER_KEY = "refineryiq_user";
@@ -92,6 +100,20 @@ export const apiUpload = async (path: string, formData: FormData, options?: Requ
 };
 
 export const authApi = {
+  register: async (payload: {
+    email: string;
+    full_name?: string | null;
+    role?: UserRole;
+    password: string;
+  }) => {
+    return apiPost<{
+      id?: string | null;
+      email: string;
+      full_name?: string | null;
+      role?: UserRole;
+      created_at?: string;
+    }>("/auth/register", payload);
+  },
   login: async (email: string, password: string) => {
     const data = await apiPost<{
       access_token: string;
@@ -168,4 +190,9 @@ export const chatbotApi = {
       headers: getAuthHeader(),
     });
   },
+};
+
+export const usersApi = {
+  getAll: async (): Promise<UserRecord[]> =>
+    apiGet<UserRecord[]>("/auth/users", { headers: getAuthHeader() }),
 };

@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button";
+import { authApi } from "@/services/api";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -22,7 +23,7 @@ const Register = () => {
     }));
   };
 
-  const handleSubmit = (event: React.FormEvent) => {
+  const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
 
     if (formData.password !== formData.confirmPassword) {
@@ -32,10 +33,24 @@ const Register = () => {
       return;
     }
 
-    toast.success("Registration request submitted", {
-      description: "Your account will be reviewed. Please sign in after approval.",
-    });
-    navigate("/login");
+    try {
+      await authApi.register({
+        email: formData.email,
+        full_name: formData.fullName,
+        role: formData.role as "ADMIN" | "OPERATOR",
+        password: formData.password,
+      });
+
+      toast.success("Registration successful", {
+        description: "Your account has been created. Please sign in.",
+      });
+      navigate("/login");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Registration failed";
+      toast.error("Registration failed", {
+        description: message,
+      });
+    }
   };
 
   return (
