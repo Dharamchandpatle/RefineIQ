@@ -7,7 +7,8 @@ import { useNavigate } from "react-router-dom";
 
 /**
  * Home Page
- * Content restored; background is handled globally by AppBackground.
+ * Backdrop blur + gradient restored correctly
+ * UI + logic unchanged
  */
 
 const features = [
@@ -41,48 +42,64 @@ const HomePage = () => {
   const navigate = useNavigate();
 
   return (
-    <div className="space-y-20">
-      <section className="relative overflow-hidden rounded-3xl border border-slate-200 bg-white/60 p-10 md:p-16">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.7 }}
-          className="max-w-4xl space-y-6"
-        >
-          <div className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-[#F37021] bg-[#F37021]/10 px-3 py-1 rounded-full">
-            IOCL Guwahati Refinery
-          </div>
-          <h1 className="font-orbitron font-bold text-4xl md:text-6xl leading-tight">
-            <TypewriterText text="RefineIQ" className="text-gradient-primary" />
-          </h1>
-          <p className="text-lg md:text-2xl text-slate-700">
-            AI-Driven Smart Refinery Energy & Safety Intelligence Platform
-          </p>
-          <p className="text-base md:text-lg text-slate-600">
-            Analyze, predict, optimize, and make data-driven decisions with confidence.
-          </p>
+    <div className="space-y-24">
+      {/* ================= HERO SECTION ================= */}
+      <section className="relative overflow-hidden rounded-3xl">
+        {/* Gradient background (REQUIRED for blur to work) */}
+        <div className="absolute inset-0 -z-10 bg-gradient-to-br from-[#F37021]/25 via-white to-[#003A8F]/25 dark:from-[#F37021]/15 dark:via-slate-900 dark:to-[#003A8F]/20" />
 
-          <div className="flex flex-wrap gap-4">
-            <Button variant="primary" onClick={() => navigate("/login")}>
-              Get Started
-              <ArrowRight className="w-4 h-4 ml-2" />
-            </Button>
-            <Button variant="brandOutline" onClick={() => navigate("/dashboard")}>
-              View Dashboard
-            </Button>
-          </div>
-        </motion.div>
+        {/* Glass container */}
+        <div className="rounded-3xl border border-slate-200 bg-white/60 backdrop-blur-xl dark:bg-slate-900/60 dark:border-slate-700">
+          <motion.div
+            initial={{ opacity: 0, y: 24 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7, ease: "easeOut" }}
+            className="max-w-4xl space-y-6 p-10 md:p-16"
+          >
+            <div className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-[#F37021] bg-[#F37021]/10 px-3 py-1 rounded-full">
+              IOCL Guwahati Refinery
+            </div>
+
+            <h1 className="font-orbitron font-bold text-4xl md:text-6xl leading-tight">
+              <TypewriterText
+                text="RefineIQ"
+                className="from-[#003A8F] bg-clip-text "
+              />
+            </h1>
+
+            <p className="text-lg md:text-2xl text-slate-700 dark:text-slate-300">
+              AI-Driven Smart Refinery Energy & Safety Intelligence Platform
+            </p>
+
+            <p className="text-base md:text-lg text-slate-600 dark:text-slate-400">
+              Analyze, predict, optimize, and make data-driven decisions with confidence.
+            </p>
+
+            <div className="flex flex-wrap gap-4 pt-2">
+              <Button variant="primary" onClick={() => navigate("/login")}>
+                Get Started
+                <ArrowRight className="w-4 h-4 ml-2" />
+              </Button>
+
+              <Button variant="brandOutline" onClick={() => navigate("/dashboard")}>
+                View Dashboard
+              </Button>
+            </div>
+          </motion.div>
+        </div>
       </section>
 
-      <section className="space-y-10">
+      {/* ================= FEATURES SECTION ================= */}
+      <section className="space-y-12">
         <div className="text-center space-y-3">
-          <h2 className="font-orbitron font-bold text-3xl md:text-4xl text-[#003A8F]">
+          <h2 className="font-orbitron font-bold text-3xl md:text-4xl text-[#003A8F] dark:text-white">
             Platform Features
           </h2>
-          <p className="text-slate-600 max-w-2xl mx-auto">
+          <p className="text-slate-600 dark:text-slate-400 max-w-2xl mx-auto">
             Comprehensive tools for energy optimization and safety management in refinery operations.
           </p>
         </div>
+
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
           {features.map((feature, index) => (
             <FeatureCard key={feature.title} {...feature} delay={index * 0.1} />

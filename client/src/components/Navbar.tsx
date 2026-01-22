@@ -27,7 +27,7 @@ const Navbar = () => {
           />
           <div>
             <p className="text-xs text-slate-500 dark:text-slate-400">Indian Oil Corporation Limited</p>
-            <h1 className="text-lg font-semibold text-[#003A8F] dark:text-[#8DB5FF]">RefineryIQ</h1>
+            <h1 className="text-lg font-semibold text-[#003A8F] dark:text-[#8DB5FF]">RefineIQ</h1>
           </div>
         </Link>
 

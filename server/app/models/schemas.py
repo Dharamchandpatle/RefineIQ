@@ -85,6 +85,18 @@ class ChatbotRequest(BaseModel):
     user_id: str | None = None
 
 
+class ChatbotQueryRequest(BaseModel):
+    dataset_id: str = Field(min_length=1)
+    user_role: str = Field(min_length=1)
+    question: str = Field(min_length=1)
+
+
+class ChatbotQueryResponse(BaseModel):
+    answer: str
+    sources: list[str]
+    confidence: str
+
+
 class ChatbotResponse(BaseModel):
     reply: str
     created_at: datetime

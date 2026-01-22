@@ -28,7 +28,7 @@ export const Header = () => {
           />
           <div className="hidden sm:flex flex-col leading-tight">
             <span className="text-xs text-slate-500">Indian Oil Corporation Limited</span>
-            <span className="font-orbitron font-bold text-lg text-[#003A8F]">RefineryIQ</span>
+            <span className="font-orbitron font-bold text-lg text-[#003A8F]">RefineIQ</span>
           </div>
         </Link>
 

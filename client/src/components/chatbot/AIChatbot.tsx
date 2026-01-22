@@ -5,8 +5,9 @@
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useAuth } from "@/hooks/useAuth";
 import { cn } from "@/lib/utils";
-import { chatbotApi } from "@/services/api";
+import { chatbotApi, datasetsApi } from "@/services/api";
 import { AnimatePresence, motion } from "framer-motion";
 import {
     Bot,
@@ -29,6 +30,7 @@ interface Message {
 }
 
 export const AIChatbot = () => {
+  const { user } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([
     {
@@ -91,12 +93,30 @@ export const AIChatbot = () => {
     setIsLoading(true);
 
     try {
-      const response = await chatbotApi.query(userMessage.content);
+      const active = await datasetsApi.getActive();
+      if (!active?.dataset_id) {
+        const noDatasetMessage: Message = {
+          id: (Date.now() + 1).toString(),
+          role: "assistant",
+          content: "Please select a dataset to ask questions.",
+          timestamp: new Date(),
+        };
+        setMessages((prev) => [...prev, noDatasetMessage]);
+        setIsLoading(false);
+        return;
+      }
+
+      const userRole = user?.role === "ADMIN" ? "admin" : "operator";
+      const response = await chatbotApi.query({
+        dataset_id: active.dataset_id,
+        user_role: userRole,
+        question: userMessage.content,
+      });
 
       const assistantMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: "assistant",
-        content: response.reply,
+        content: response.answer,
         timestamp: new Date(),
       };
 
@@ -104,14 +124,13 @@ export const AIChatbot = () => {
       
       // Speak the response if audio is enabled
       if (audioEnabled) {
-        speakText(response.reply);
+        speakText(response.answer);
       }
     } catch (error) {
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: "assistant",
-        content:
-          "I apologize, but I encountered an error processing your request. Please try again.",
+        content: "Unable to fetch insights at the moment.",
         timestamp: new Date(),
       };
       setMessages((prev) => [...prev, errorMessage]);

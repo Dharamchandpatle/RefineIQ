@@ -1,4 +1,5 @@
-import { chatbotApi } from "@/services/api";
+import { useAuth } from "@/hooks/useAuth";
+import { chatbotApi, datasetsApi } from "@/services/api";
 import { useState } from "react";
 
 interface ChatMessage {
@@ -7,6 +8,7 @@ interface ChatMessage {
 }
 
 const ChatbotWidget = () => {
+  const { user } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
@@ -21,15 +23,29 @@ const ChatbotWidget = () => {
     setIsLoading(true);
 
     try {
-      const response = await chatbotApi.query(userMessage.content);
+      const active = await datasetsApi.getActive();
+      if (!active?.dataset_id) {
+        setMessages((prev) => [
+          ...prev,
+          { role: "assistant", content: "Please select a dataset to ask questions." },
+        ]);
+        setIsLoading(false);
+        return;
+      }
+      const userRole = user?.role === "ADMIN" ? "admin" : "operator";
+      const response = await chatbotApi.query({
+        dataset_id: active.dataset_id,
+        user_role: userRole,
+        question: userMessage.content,
+      });
       setMessages((prev) => [
         ...prev,
-        { role: "assistant", content: response.reply },
+        { role: "assistant", content: response.answer },
       ]);
     } catch (error) {
       setMessages((prev) => [
         ...prev,
-        { role: "assistant", content: "Unable to connect to the chatbot service." },
+        { role: "assistant", content: "Unable to fetch insights at the moment." },
       ]);
     } finally {
       setIsLoading(false);

@@ -1,15 +1,15 @@
-fastapi==0.115.6
-uvicorn[standard]==0.30.6
-motor==3.6.0
-pydantic==2.10.4
-pydantic-settings==2.6.1
+fastapi==0.115.6  # Web framework
+uvicorn[standard]==0.30.6 # ASGI server
+motor==3.6.0 # Async MongoDB driver
+pydantic==2.10.4c # Data validation & schema 
+pydantic-settings==2.6.1 #Environment variables manage
 email-validator==2.2.0
-python-jose==3.3.0
-passlib[bcrypt]==1.7.4
-argon2-cffi==23.1.0
-pandas==2.2.3
-numpy==1.26.4
-scikit-learn==1.5.2
-prophet==1.1.5
-google-generativeai==0.8.3
+python-jose==3.3.0 #JWT token handling
+passlib[bcrypt]==1.7.4 #Password hashing
+argon2-cffi==23.1.0 #Password hashing
+pandas==2.2.3 #Data manipulation
+numpy==1.26.4 #Numerical computations
+scikit-learn==1.5.2     #Machine learning
+prophet==1.1.5 #Time series forecasting
+google-generativeai==0.8.3 #Google Gemini AI integration
 requests==2.32.3

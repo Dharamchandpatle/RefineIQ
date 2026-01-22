@@ -70,6 +70,12 @@ export interface DatasetRecord {
   created_at?: string | null;
 }
 
+export interface ChatbotQueryResponse {
+  answer: string;
+  sources: string[];
+  confidence: "high" | "medium" | "low";
+}
+
 const TOKEN_KEY = "refineryiq_token";
 const ROLE_KEY = "refineryiq_role";
 const USER_KEY = "refineryiq_user";
@@ -226,8 +232,8 @@ export const recommendationsApi = {
 };
 
 export const chatbotApi = {
-  query: async (message: string, context?: Record<string, unknown>) => {
-    return apiPost<{ reply: string }>("/api/chatbot", { message, context }, {
+  query: async (payload: { dataset_id: string; user_role: "admin" | "operator"; question: string }) => {
+    return apiPost<ChatbotQueryResponse>("/api/chatbot/query", payload, {
       headers: getAuthHeader(),
     });
   },
