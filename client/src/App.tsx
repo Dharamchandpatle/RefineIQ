@@ -9,6 +9,9 @@ import Profile from "@/pages/Profile";
 import Register from "@/pages/Register";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
+import ForgotPassword from "@/pages/ForgotPassword";
+import ResetPassword from "@/pages/ResetPassword";
+
 
 const queryClient = new QueryClient();
 
@@ -45,7 +48,12 @@ const AppRoutes = () => {
           <Route index element={<HomePage />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password/:token" element={<ResetPassword />} />
+
+
           <Route path="/dashboard" element={<RoleRedirect />} />
+          
           <Route
             path="/dashboard/admin"
             element={
